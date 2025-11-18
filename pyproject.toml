@@ -1,0 +1,46 @@
+[project]
+name = "agno-crag"
+version = "0.1.0"
+description = "AGNO-CRAG: CRAG-enabled RAG pipeline with Agno framework"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "agno>=2.2.13",
+    "fastapi[standard]>=0.121.2",
+    "openai>=2.8.0",
+    "pypdf>=4.2.0",
+    "sqlalchemy>=2.0.44",
+    # CRAG core dependencies
+    "torch>=2.0.0",
+    "transformers>=4.30.0",
+    "sentencepiece>=0.1.99",
+    "tqdm>=4.66.0",
+    # Optional: Web search support (for external knowledge)
+    "beautifulsoup4>=4.12.0",
+    "requests>=2.31.0",
+    "lancedb>=0.25.3",
+    # Embedding models (for Knowledge base)
+    "sentence-transformers>=2.2.0",
+    "pandas>=2.3.3",
+    # Environment variable management
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+# Full CRAG with T5 evaluator support
+t5 = [
+    "torch>=2.0.0",
+    "transformers>=4.30.0",
+]
+# Web search support (for external knowledge preparation)
+web = [
+    "beautifulsoup4>=4.12.0",
+    "requests>=2.31.0",
+]
+# All optional dependencies
+all = [
+    "torch>=2.0.0",
+    "transformers>=4.30.0",
+    "beautifulsoup4>=4.12.0",
+    "requests>=2.31.0",
+]

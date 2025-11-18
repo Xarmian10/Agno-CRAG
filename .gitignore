@@ -1,0 +1,47 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+*.pyc
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+venv/
+env/
+
+# Environment variables (contains sensitive API keys)
+.env
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+rag_database.db
+agno.db
+
+# Temporary files and directories
+tmp/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Model files (large, should be downloaded separately)
+finetuned_t5_evaluator/
+
+# PDF files (example documents, can be removed if needed)
+pdf/*.pdf
+
+# Lock files (optional, some prefer to commit)
+# uv.lock

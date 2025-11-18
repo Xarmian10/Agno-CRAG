@@ -38,10 +38,10 @@ tmp/
 Thumbs.db
 
 # Model files (large, should be downloaded separately)
-finetuned_t5_evaluator/
+# finetuned_t5_evaluator/
 
 # PDF files (example documents, can be removed if needed)
-pdf/*.pdf
+pdf/
 
 # Lock files (optional, some prefer to commit)
 # uv.lock

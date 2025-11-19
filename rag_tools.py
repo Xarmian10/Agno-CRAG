@@ -28,7 +28,7 @@ def log_to_console(message: str, flush: bool = True):
     if not isinstance(message, str):
         message = str(message)
     
-    # Write to stderr directly (most reliable, avoids duplicate output)
+    # Write to stderr directly (most reliable, avoids duplicate output) 
     try:
         # Try direct write first
         sys.stderr.write(message + "\n")

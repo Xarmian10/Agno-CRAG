@@ -1,4 +1,4 @@
-[project]
+[project] 
 name = "agno-crag"
 version = "0.1.0"
 description = "AGNO-CRAG: CRAG-enabled RAG pipeline with Agno framework"

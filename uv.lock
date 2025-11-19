@@ -7,6 +7,7 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 
+
 [[package]]
 name = "agno"
 version = "2.2.13"

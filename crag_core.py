@@ -4,7 +4,7 @@ CRAG core components: semantic evaluator, web search, and action router.
 This module consolidates all CRAG core functionality including:
 - Semantic retrieval evaluator (T5-based)
 - Web search augmenter
-- Complete action router
+- Complete action router 
 - Enhanced knowledge refiner
 """
 from __future__ import annotations

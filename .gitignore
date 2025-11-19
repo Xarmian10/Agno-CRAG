@@ -61,8 +61,13 @@ temp/
 # Model cache
 models/
 *.bin
-*.safetensors
-# Note: finetuned_t5_evaluator/ is intentionally tracked for sharing the T5 model
+# Note: We keep finetuned_t5_evaluator/ tracked but exclude the large model file
+finetuned_t5_evaluator/*.safetensors
+finetuned_t5_evaluator/*.bin
+
+# PDF documents (user uploaded)
+pdf/
+*.pdf
 
 # Testing
 .pytest_cache/

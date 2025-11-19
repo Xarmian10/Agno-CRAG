@@ -121,10 +121,16 @@ def get_semantic_evaluator(
     """
     global _semantic_evaluator
     
-    if not enable or not SEMANTIC_EVALUATOR_AVAILABLE:
+    if not enable:
         return None
     
+    # 检查是否已经创建过评估器（单例模式）
     if _semantic_evaluator is None:
+        # 检查核心模块是否可用
+        if not SEMANTIC_EVALUATOR_AVAILABLE:
+            print(f"Warning: Semantic evaluator module not available. Using lexical scoring.")
+            return None
+        
         try:
             # Use default model path if not specified
             if model_path is None:
@@ -133,14 +139,23 @@ def get_semantic_evaluator(
             # Get batch size from environment or use default
             batch_size = int(os.getenv("T5_BATCH_SIZE", batch_size))
             
-            print(f"🚀 初始化语义评估器 (批处理大小: {batch_size})...")
+            print(f"[INIT] 初始化语义评估器 (批处理大小: {batch_size})...")
+            
+            # SemanticRetrievalEvaluator内部会自动重新检查T5可用性
             _semantic_evaluator = SemanticRetrievalEvaluator(
                 model_path=model_path,
                 batch_size=batch_size,
             )
-        except Exception as e:
-            # Fallback to lexical scoring if T5 not available
+        except RuntimeError as e:
+            # 这是T5依赖不可用的预期错误
             print(f"Warning: Semantic evaluator not available: {e}. Using lexical scoring.")
+            return None
+        except Exception as e:
+            # 其他意外错误
+            import traceback
+            print(f"Warning: Semantic evaluator initialization failed: {e}. Using lexical scoring.")
+            print(f"[调试] 错误详情:")
+            print(traceback.format_exc())
             return None
     
     return _semantic_evaluator
@@ -183,9 +198,9 @@ def get_action_router(
     Get or create the global action router instance.
     
     Args:
-        use_semantic: Whether to use semantic evaluator.
+        use_semantic: Whether to use semantic evaluator. If None, reads from ENABLE_T5_EVALUATOR env var.
         use_web_search: Whether to use web search.
-        
+    
     Returns:
         CompleteActionRouter instance or None if not available.
     """
@@ -195,6 +210,11 @@ def get_action_router(
         return None
     
     if _action_router is None:
+        # Read T5 evaluator enable flag from environment if not explicitly provided
+        if use_semantic:
+            enable_t5 = os.getenv("ENABLE_T5_EVALUATOR", "true").lower() == "true"
+            use_semantic = enable_t5
+        
         evaluator = get_semantic_evaluator(enable=use_semantic) if use_semantic else None
         web_searcher = get_web_searcher(enable=use_web_search) if use_web_search else None
         

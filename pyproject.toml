@@ -12,10 +12,6 @@ dependencies = [
     "openai>=2.8.0",
     "pypdf>=4.2.0",
     "sqlalchemy>=2.0.44",
-    # CRAG core dependencies
-    "torch>=2.0.0",
-    "transformers>=4.30.0",
-    "sentencepiece>=0.1.99",
     "tqdm>=4.66.0",
     # Optional: Web search support (for external knowledge)
     "beautifulsoup4>=4.12.0",
@@ -23,9 +19,11 @@ dependencies = [
     "lancedb>=0.25.3",
     # Embedding models (for Knowledge base)
     "sentence-transformers>=2.2.0",
-    "pandas>=2.3.3",
     # Environment variable management
     "python-dotenv>=1.0.0",
+    "transformers>=4.57.1",
+    "sentencepiece>=0.2.1",
+    "pandas>=2.3.3",
 ]
 
 [project.optional-dependencies]
@@ -46,3 +44,13 @@ all = [
     "beautifulsoup4>=4.12.0",
     "requests>=2.31.0",
 ]
+
+[[tool.uv.index]]
+name = "pytorch-gpu"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-gpu" }
+torchvision = { index = "pytorch-gpu" }
+torchaudio = { index = "pytorch-gpu" }

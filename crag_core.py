@@ -44,15 +44,31 @@ def safe_print(message: str, flush: bool = True):
         pass
 
 # Semantic Evaluator
-try:
-    import torch
-    from transformers import T5ForSequenceClassification, T5Tokenizer
-    T5_AVAILABLE = True
-except ImportError:
-    T5_AVAILABLE = False
-    torch = None
-    T5ForSequenceClassification = None
-    T5Tokenizer = None
+def _check_t5_availability():
+    """延迟检查T5依赖可用性，支持重新检查"""
+    try:
+        import torch
+        from transformers import T5ForSequenceClassification, T5Tokenizer
+        return True, torch, T5ForSequenceClassification, T5Tokenizer
+    except ImportError as e:
+        return False, None, None, None
+
+# 初始检查
+_T5_CHECK_RESULT = _check_t5_availability()
+T5_AVAILABLE = _T5_CHECK_RESULT[0]
+torch = _T5_CHECK_RESULT[1]
+T5ForSequenceClassification = _T5_CHECK_RESULT[2]
+T5Tokenizer = _T5_CHECK_RESULT[3]
+
+def recheck_t5_availability():
+    """重新检查T5依赖可用性（用于排查导入问题）"""
+    global T5_AVAILABLE, torch, T5ForSequenceClassification, T5Tokenizer
+    _T5_CHECK_RESULT = _check_t5_availability()
+    T5_AVAILABLE = _T5_CHECK_RESULT[0]
+    torch = _T5_CHECK_RESULT[1]
+    T5ForSequenceClassification = _T5_CHECK_RESULT[2]
+    T5Tokenizer = _T5_CHECK_RESULT[3]
+    return T5_AVAILABLE
 
 # Web Search
 try:
@@ -86,11 +102,15 @@ class SemanticRetrievalEvaluator:
         batch_size: int = 4,
     ):
         """Initialize the semantic evaluator."""
+        # 在初始化前重新检查T5可用性（解决模块缓存问题）
         if not T5_AVAILABLE:
-            raise RuntimeError(
-                "T5 dependencies not available. Please install: "
-                "pip install torch transformers sentencepiece"
-            )
+            safe_print("[INFO] T5_AVAILABLE=False，尝试重新检查依赖...")
+            current_status = recheck_t5_availability()
+            if not current_status:
+                raise RuntimeError(
+                    "T5 dependencies not available. Please install: "
+                    "pip install torch transformers sentencepiece"
+                )
         
         if model_path is None:
             model_path = "finetuned_t5_evaluator"
@@ -100,8 +120,25 @@ class SemanticRetrievalEvaluator:
                     "Please download the fine-tuned T5 evaluator model."
                 )
         
+        # 强制重新检查CUDA可用性（解决模块缓存问题）
         if device is None:
-            device = "cuda" if torch.cuda.is_available() else "cpu"
+            # 重新导入torch以获取最新状态
+            import importlib
+            try:
+                torch_module = importlib.reload(torch)
+                cuda_available = torch_module.cuda.is_available()
+            except:
+                cuda_available = torch.cuda.is_available()
+            
+            if cuda_available:
+                device = "cuda"
+                safe_print(f"[GPU] 检测到CUDA可用，将使用GPU加速")
+                safe_print(f"[GPU] 设备: {torch.cuda.get_device_name(0)}")
+                safe_print(f"[GPU] 显存: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB")
+            else:
+                device = "cpu"
+                safe_print(f"[WARNING] CUDA不可用，将使用CPU")
+                safe_print(f"[WARNING] torch版本: {torch.__version__}")
         
         self.device = torch.device(device)
         self.max_length = max_length
@@ -122,10 +159,17 @@ class SemanticRetrievalEvaluator:
             self.model.to(self.device)
             self.model.eval()
             
-            if torch.cuda.is_available():
-                safe_print(f"[完成] T5模型已加载到 GPU: {torch.cuda.get_device_name(0)}")
+            # 验证模型确实在正确的设备上
+            model_device = next(self.model.parameters()).device
+            safe_print(f"[完成] T5模型已加载")
+            safe_print(f"  模型设备: {model_device}")
+            safe_print(f"  批处理大小: {self.batch_size}")
+            
+            if model_device.type == "cuda":
+                safe_print(f"  GPU: {torch.cuda.get_device_name(model_device.index or 0)}")
             else:
-                safe_print(f"[警告] T5模型加载到 CPU (GPU不可用，性能会较慢)")
+                safe_print(f"  [警告] 模型在CPU上运行，性能会较慢")
+                
         except Exception as e:
             raise RuntimeError(f"Failed to load T5 evaluator from {model_path}: {e}")
     

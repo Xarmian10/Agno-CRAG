@@ -1,95 +1,92 @@
-# Agno-RAG: CRAG-Enhanced Intelligent Document Q&A System
+# Agno-RAG: CRAG增强的智能文档问答系统
 
-> A high-performance document question-answering system based on the Agno framework and CRAG (Corrective Retrieval Augmented Generation) technology
+> 一个基于Agno框架和CRAG（Corrective Retrieval Augmented Generation）技术的高性能文档问答系统
 
-## Table of Contents
+## 目录
 
-- [Project Introduction](#project-introduction)
-- [Core Features](#core-features)
-- [System Architecture](#system-architecture)
-- [CRAG Strategy Explained](#crag-strategy-explained)
-- [Quick Start](#quick-start)
-  - [Requirements](#requirements)
-  - [Installation Steps](#installation-steps)
-  - [Configuration](#configuration)
-- [AgentOS Connection](#agentos-connection)
-- [Strategy Configuration](#strategy-configuration)
-- [Performance Optimization](#performance-optimization)
-- [FAQ](#faq)
-
----
-
-## Project Introduction
-
-Agno-RAG is an intelligent document question-answering system that enables AI to understand and answer questions about your uploaded PDF documents. Unlike traditional RAG systems, this system employs **CRAG (Corrective Retrieval Augmented Generation)** technology, which intelligently evaluates the quality of retrieval results and automatically adopts optimal strategies to significantly improve answer accuracy.
-
-### Use Cases
-
-- Technical documentation queries (standards, specifications, technical manuals)
-- Enterprise knowledge base management
-- Contract document analysis
-- Academic paper reading assistant
+- [项目简介](#项目简介)
+- [核心功能](#核心功能)
+- [系统架构](#系统架构)
+- [CRAG策略详解](#crag策略详解)
+- [快速开始](#快速开始)
+  - [环境要求](#环境要求)
+  - [安装步骤](#安装步骤)
+  - [配置说明](#配置说明)
+- [AgentOS连接](#agentos连接)
+- [策略配置](#策略配置)
+- [性能优化](#性能优化)
+- [常见问题](#常见问题)
 
 ---
 
-## Core Features
+## 项目简介
 
-### 1. Intelligent Document Management
+Agno-RAG 是一个智能文档问答系统，可以让AI理解和回答您上传的PDF文档中的内容。与传统的RAG系统不同，本系统采用了**CRAG（校正检索增强生成）**技术，能够智能评估检索结果的质量，并自动采取最优策略，大幅提升回答的准确性。
 
-- **PDF Upload and Parsing**: Support for batch PDF document uploads
-- **Intelligent Chunking**: Automatically segments documents into semantically coherent chunks
-- **Vector Storage**: Efficient vector retrieval using LanceDB
-- **Document Tracking**: Support for filtering queries by document ID
+### 适用场景
 
-### 2. CRAG-Enhanced Retrieval
-
-The core innovation of this system is **CRAG (Corrective RAG)**, which includes three key components:
-
-#### Semantic Retrieval Evaluator (T5-based)
-
-- Uses a fine-tuned T5 model to evaluate semantic relevance between retrieved documents and queries
-- Returns continuous scores (-1 to 1), more accurate than simple keyword matching
-- **GPU acceleration supported**, providing 10-40x speedup for evaluation
-
-#### Three-Action Routing Mechanism
-
-Automatically selects optimal strategies based on document quality:
-
-| Action | Trigger Condition | Processing Method |
-|--------|------------------|-------------------|
-| **Correct** | High-quality documents (score > 0.6) | Use retrieval results directly |
-| **Incorrect** | Low-quality documents (score < 0.2) | Trigger external knowledge search |
-| **Ambiguous** | Medium-quality documents (0.2 ≤ score ≤ 0.6) | Knowledge refinement and reconstruction |
-
-#### Knowledge Refiner
-
-- **Decompose-Reconstruct** strategy: Splits long documents into knowledge strips
-- **Semantic Filtering**: Removes content irrelevant to the query
-- **Information Reorganization**: Reorganizes knowledge to provide clearer answers
-
-### 3. Query Enhancement Strategies
-
-- **Query Expansion**: Automatically generates similar queries to improve recall
-- **Multi-Strategy Retrieval**:
-  - Original query retrieval
-  - Document ID filtering
-  - Hybrid retrieval
-- **Result Deduplication and Sorting**: Intelligently merges and sorts retrieval results
-
-### 4. Web Interface (AgentOS Integration)
-
-- Modern web interface
-- Conversational interaction
-- Visual knowledge base management
-- Query history tracking
+- 技术文档查询（标准规范、技术手册）
+- 企业知识库管理
+- 合同文件分析
+- 学术论文阅读助手
 
 ---
 
-## System Architecture
+## 核心功能
+
+### 1. 智能文档管理
+
+- **PDF上传与解析**：支持批量上传PDF文档
+- **智能分块**：自动将文档切分为语义连贯的片段
+- **向量存储**：使用LanceDB进行高效的向量检索
+- **文档追踪**：支持按文档ID过滤查询
+
+### 2. CRAG增强检索
+
+本系统的核心创新是**CRAG（Corrective RAG）**，它包含三个关键组件：
+
+#### 语义检索评估器（T5-based）
+- 使用微调的T5模型评估检索文档与查询的语义相关性
+- 返回连续分数（-1到1），比简单的关键词匹配更准确
+- **支持GPU加速**，评估速度提升10-40倍
+
+#### 三动作路由机制
+根据文档质量自动选择最优策略：
+
+| 动作 | 触发条件 | 处理方式 |
+|------|---------|---------|
+| **Correct** | 高质量文档（分数>0.6） | 直接使用检索结果 |
+| **Incorrect** | 低质量文档（分数<0.2） | 触发外部知识搜索 |
+| **Ambiguous** | 中等质量文档（0.2≤分数≤0.6） | 知识精炼与重构 |
+
+#### 知识精炼器
+- **分解-重构**策略：将长文档拆分为知识片段
+- **语义过滤**：去除与查询无关的内容
+- **信息重组**：重新组织知识以提供更清晰的答案
+
+### 3. 查询增强策略
+
+- **查询扩展**：自动生成相似查询以提高召回率
+- **多策略检索**：
+  - 原始查询检索
+  - 文档ID过滤
+  - 混合检索
+- **结果去重与排序**：智能合并和排序检索结果
+
+### 4. Web界面（AgentOS集成）
+
+- 现代化的Web界面
+- 对话式交互
+- 知识库可视化管理
+- 查询历史追踪
+
+---
+
+## 系统架构
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                         User Interface                       │
+│                         用户界面                              │
 │                  (AgentOS Web Interface)                     │
 └────────────────────────┬────────────────────────────────────┘
                          │
@@ -117,115 +114,113 @@ Automatically selects optimal strategies based on document quality:
 └──────────────┘ └─┴──────────┘─┘ └──────────────┘
 ```
 
-### Data Flow
+### 数据流程
 
-1. **Document Upload** → PDF parsing → Text extraction → Chunking → Vectorization → Storage
-2. **User Query** → Vector retrieval → CRAG evaluation → Action routing → Knowledge refinement → LLM answer generation
+1. **文档上传** → PDF解析 → 文本提取 → 分块 → 向量化 → 存储
+2. **用户查询** → 向量检索 → CRAG评估 → 动作路由 → 知识精炼 → LLM生成答案
 
 ---
 
-## CRAG Strategy Explained
+## CRAG策略详解
 
-### Why CRAG?
+### 为什么需要CRAG？
 
-Problems with traditional RAG systems:
-- Does not distinguish quality of retrieval results
-- Low-quality documents mislead AI
-- Cannot handle missing knowledge base scenarios
-- Redundant information interferes with answer generation
+传统RAG系统的问题：
+- 不区分检索结果的质量
+- 低质量文档会误导AI
+- 无法处理知识库缺失的情况
+- 冗余信息干扰答案生成
 
-CRAG solutions:
-- **Intelligent Evaluation**: Automatically determines if retrieval results are reliable
-- **Dynamic Routing**: Selects different processing strategies based on quality
-- **Knowledge Refinement**: Extracts key information, filters noise
-- **External Supplementation**: Triggers web search when quality is poor
+CRAG的解决方案：
+- **智能评估**：自动判断检索结果是否可靠
+- **动态路由**：根据质量选择不同处理策略
+- **知识精炼**：提取关键信息，过滤噪音
+- **外部补充**：质量不佳时触发web搜索
 
-### CRAG Workflow
+### CRAG工作流程
 
 ```
-Query → Vector Retrieval
+查询 → 向量检索
          │
          ▼
-    CRAG Evaluation
+    CRAG评估
          │
     ┌────┴────┐
     ▼         ▼
-Semantic      Fast Path
-Evaluation    (Lexical)
-(T5 Model)
+语义评估    快速路径
+(T5模型)   (词法评分)
     │         │
     └────┬────┘
          ▼
-    Quality Score (confidence)
+    质量评分 (confidence score)
          │
     ┌────┼────┐
     ▼    ▼    ▼
  Correct Ambiguous Incorrect
     │    │         │
     │    ▼         ▼
-    │  Refine   Web Search
+    │  知识精炼  Web搜索
     │    │         │
     └────┴────┬────┘
               ▼
-         Generate Answer
+          生成答案
 ```
 
-### Three Evaluation Modes
+### 三种评估模式
 
-#### 1. Fast Path
-- **Trigger Condition**: High retrieval score (>0.95) and moderate document count
-- **Characteristics**: Uses lexical scoring, fast
-- **Use Case**: High-confidence queries, seeking speed
+#### 1. 快速路径（Fast Path）
+- **触发条件**：检索结果分数很高（>0.95）且文档数量适中
+- **特点**：使用词法评分，速度快
+- **适用场景**：高置信度查询，追求响应速度
 
-#### 2. Full CRAG
-- **Trigger Condition**: Default mode or uncertain retrieval quality
-- **Characteristics**: Uses T5 semantic evaluation, high accuracy
-- **Use Case**: Queries requiring high accuracy
+#### 2. 完整CRAG（Full CRAG）
+- **触发条件**：默认模式或检索质量不确定
+- **特点**：使用T5语义评估，准确度高
+- **适用场景**：需要高准确度的查询
 
-#### 3. Performance Mode
-- **Trigger Condition**: Set `DISABLE_FAST_PATH=true`
-- **Characteristics**: Forces full CRAG, facilitates performance testing
-- **Use Case**: Development debugging, performance optimization
-
----
-
-## Quick Start
-
-### Requirements
-
-#### Hardware Requirements
-
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| CPU | 4 cores | 8+ cores |
-| Memory | 8GB | 16GB+ |
-| Storage | 20GB available | 50GB+ SSD |
-| GPU | None (use CPU) | NVIDIA GPU 6GB+ VRAM |
-
-**GPU Support**:
-- Recommended: NVIDIA GPU (RTX 3060 or higher)
-- Performance boost: GPU provides 10-40x speedup for T5 evaluation
-- Supported CUDA versions: 11.8 or 12.1
-
-#### Software Requirements
-
-- **Operating System**: Windows 10/11, Linux, macOS
-- **Python**: 3.10 or higher
-- **Package Manager**: uv (recommended) or pip
+#### 3. 性能评估模式（Performance Mode）
+- **触发条件**：设置 `DISABLE_FAST_PATH=true`
+- **特点**：强制使用完整CRAG，便于性能测试
+- **适用场景**：开发调试、性能优化
 
 ---
 
-### Installation Steps
+## 快速开始
 
-#### Step 1: Clone the Project
+### 环境要求
+
+#### 硬件要求
+
+| 组件 | 最低配置 | 推荐配置 |
+|------|---------|---------|
+| CPU | 4核心 | 8核心+ |
+| 内存 | 8GB | 16GB+ |
+| 硬盘 | 20GB可用空间 | 50GB+ SSD |
+| GPU | 无（使用CPU） | NVIDIA GPU 6GB+ 显存 |
+
+**GPU支持**：
+- 推荐：NVIDIA GPU（RTX 3060及以上）
+- 性能提升：使用GPU可将T5评估速度提升10-40倍
+- 支持的CUDA版本：11.8 或 12.1
+
+#### 软件要求
+
+- **操作系统**：Windows 10/11、Linux、macOS
+- **Python**：3.10 或更高版本
+- **包管理器**：uv（推荐）或 pip
+
+---
+
+### 安装步骤
+
+#### 步骤 1: 克隆项目
 
 ```bash
-# Clone repository
 git clone https://github.com/Xarmian10/Agno-CRAG.git
 cd Agno-CRAG
 ```
 
-#### Step 2: Install uv (Recommended Package Manager)
+#### 步骤 2: 安装uv（推荐的包管理器）
 
 **Windows (PowerShell)**:
 ```powershell
@@ -237,40 +232,40 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-#### Step 3: Install Dependencies
+#### 步骤 3: 安装依赖
 
-**Basic Installation (CPU version)**:
+**基础安装**:
 ```bash
 uv sync
 ```
 
-**GPU Version Installation** (Recommended for better performance):
+**GPU版本安装**（推荐，性能更好）:
 
-If you have an NVIDIA GPU, the project is already configured to use the GPU version of PyTorch:
+如果您有NVIDIA GPU，项目已配置使用GPU版本的PyTorch：
 
 ```bash
-# 1. First verify GPU is available
+# 1. 首先确认GPU可用
 nvidia-smi
 
-# 2. Sync installation (GPU index already configured)
+# 2. 同步安装（已配置GPU索引）
 uv sync
 
-# 3. Verify GPU support
-uv run python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
+# 3. 验证GPU支持
+uv run python -c "import torch; print(f'CUDA可用: {torch.cuda.is_available()}')"
 ```
 
-**Note**:
-- The project's `pyproject.toml` has PyTorch GPU index configured
-- No need to manually specify index URL
-- If verification fails, see GPU configuration troubleshooting
+**注意**：
+- 项目的 `pyproject.toml` 已配置PyTorch GPU索引
+- 无需手动指定索引URL
+- 如果验证失败，查看GPU配置故障排查部分
 
 ---
 
-### Configuration
+### 配置说明
 
-#### Step 4: Configure Environment Variables
+#### 步骤 4: 配置环境变量
 
-Create `.env` file (copy from template):
+创建 `.env` 文件（从模板复制）：
 
 ```bash
 # Windows
@@ -280,93 +275,93 @@ copy .env.example .env
 cp .env.example .env
 ```
 
-Then edit the `.env` file:
+然后编辑 `.env` 文件：
 
 ```bash
 # ============================================================
-# Core Configuration
+# 核心配置
 # ============================================================
 
-# DeepSeek API Configuration (Required)
+# DeepSeek API配置（必需）
 DEEPSEEK_API_KEY=your-api-key-here
 DEEPSEEK_BASE_URL=https://api.siliconflow.cn/v1
 DEEPSEEK_MODEL_ID=deepseek-ai/DeepSeek-V3.1-Terminus
 
 # ============================================================
-# CRAG Configuration
+# CRAG配置
 # ============================================================
 
-# Enable Complete CRAG (Recommended)
+# 启用完整CRAG（推荐）
 USE_COMPLETE_CRAG=true
 
-# Enable T5 Semantic Evaluator
+# 启用T5语义评估器
 ENABLE_T5_EVALUATOR=true
 
-# T5 Model Path
+# T5模型路径
 T5_EVALUATOR_PATH=finetuned_t5_evaluator
 
-# T5 Batch Size
+# T5批处理大小
 # CPU: 4-8, GPU(6GB): 8-12, GPU(8GB): 12-16, GPU(12GB+): 16-24
 T5_BATCH_SIZE=12
 
-# Disable Fast Path (Force full CRAG for performance testing)
+# 禁用快速路径（强制使用完整CRAG，便于性能测试）
 DISABLE_FAST_PATH=false
 
 # ============================================================
-# Web Search Configuration (Optional)
+# Web搜索配置（可选）
 # ============================================================
 
-# Enable Web Search Enhancement
+# 启用Web搜索增强
 ENABLE_WEB_SEARCH=false
 
-# SerpAPI Key (if web search enabled)
+# SerpAPI Key（如果启用web搜索）
 # SERPAPI_KEY=your-serpapi-key
 
 # ============================================================
-# Performance Configuration
+# 性能配置
 # ============================================================
 
-# Verbose Logging
+# 详细日志输出
 VERBOSE_CRAG=false
 ```
 
-#### Step 5: Obtain API Keys
+#### 步骤 5: 获取API密钥
 
-##### 1. DeepSeek API (Required)
+##### 1. DeepSeek API（必需）
 
-This project uses DeepSeek API provided by SiliconFlow:
+本项目使用SiliconFlow提供的DeepSeek API：
 
-1. Visit [SiliconFlow](https://cloud.siliconflow.cn/)
-2. Register and log in
-3. Go to "API Keys" page
-4. Create new API key
-5. Copy key to `DEEPSEEK_API_KEY` in `.env` file
+1. 访问 [SiliconFlow](https://cloud.siliconflow.cn/)
+2. 注册账号并登录
+3. 进入「API密钥」页面
+4. 创建新的API密钥
+5. 复制密钥到 `.env` 文件的 `DEEPSEEK_API_KEY`
 
-**Pricing**:
-- New users typically have free credits
-- Charged per token, relatively low cost
-- See official website for detailed pricing
+**费用说明**：
+- 新用户通常有免费额度
+- 按Token计费，成本较低
+- 详细价格见官网
 
-##### 2. SerpAPI (Optional, for Web Search)
+##### 2. SerpAPI（可选，用于Web搜索）
 
-If external knowledge enhancement is needed:
+如果需要外部知识增强：
 
-1. Visit [SerpAPI](https://serpapi.com/)
-2. Register account
-3. Get API key
-4. Set in `.env`:
+1. 访问 [SerpAPI](https://serpapi.com/)
+2. 注册账号
+3. 获取API密钥
+4. 在 `.env` 中设置：
    ```bash
    ENABLE_WEB_SEARCH=true
    SERPAPI_KEY=your-serpapi-key
    ```
 
-#### Step 6: Prepare T5 Model
+#### 步骤 6: 准备T5模型
 
-This system requires a fine-tuned T5 evaluator model:
+本系统需要微调的T5评估器模型：
 
-**Option A: Use Pre-trained Model** (Recommended)
+**选项 A：使用预训练模型**（推荐）
 
-If you have a pre-trained T5 model, place it in the project root:
+如果您有预训练的T5模型，将其放在项目根目录：
 
 ```
 Agno-CRAG/
@@ -378,276 +373,276 @@ Agno-CRAG/
 └── ...
 ```
 
-**Option B: Disable T5 Evaluator** (Fallback mode)
+**选项 B：禁用T5评估器**（降级模式）
 
-If you don't have the T5 model temporarily, you can use lexical scoring:
+如果暂时没有T5模型，可以使用词法评分：
 
-Set in `.env`:
+在 `.env` 中设置：
 ```bash
 ENABLE_T5_EVALUATOR=false
 ```
 
-**Note**: Disabling T5 reduces evaluation accuracy, recommended for testing only.
+**注意**：禁用T5会降低评估准确度，建议仅用于测试。
 
 ---
 
-## AgentOS Connection
+## AgentOS连接
 
-AgentOS is a modern web interface provided by the Agno framework, allowing you to interact with AI through a browser.
+AgentOS 是Agno框架提供的现代化Web界面，让您可以通过浏览器与AI对话。
 
-### Start Service
+### 启动服务
 
 ```bash
-# Run with uv (recommended)
+# 使用uv运行（推荐）
 uv run python agno_agent.py
 
-# Or run directly (if virtual environment activated)
+# 或直接运行（如果已激活虚拟环境）
 python agno_agent.py
 ```
 
-### Access Interface
+### 访问界面
 
-After successful startup, you will see:
+启动成功后，您会看到：
 
 ```
-Model configuration loaded: deepseek-ai/DeepSeek-V3.1-Terminus
-SQLite database configured
+模型配置已加载: deepseek-ai/DeepSeek-V3.1-Terminus
+SQLite 数据库已配置
 ...
-Knowledge base created (using LanceDB)
+知识库已创建（使用 LanceDB）
 ...
 
-Access URL: http://127.0.0.1:7777
-API Docs: http://127.0.0.1:7777/docs
+访问地址: http://127.0.0.1:7777
+API 文档: http://127.0.0.1:7777/docs
 ```
 
-#### Local Access
+#### 本地访问
 
-Open in browser: `http://127.0.0.1:7777`
+在浏览器中打开：`http://127.0.0.1:7777`
 
-You will see Agno's local debug interface.
+您会看到Agno的本地调试界面。
 
-#### Connect to AgentOS Cloud
+#### 连接到AgentOS云端
 
-1. **Register AgentOS Account**
-   - Visit [os.agno.com](https://os.agno.com)
-   - Register and log in
+1. **注册AgentOS账号**
+   - 访问 [os.agno.com](https://os.agno.com)
+   - 注册并登录
 
-2. **Add Agent Connection**
-   - Click "Add Agent"
-   - Select "Local Agent"
-   - Enter connection info:
+2. **添加Agent连接**
+   - 点击 「Add Agent」或「添加智能体」
+   - 选择 「Local Agent」
+   - 输入连接信息：
      ```
-     Name: Agno-RAG
+     名称: Agno-RAG
      URL: http://127.0.0.1:7777
      ```
-   - Click "Connect"
+   - 点击「连接」
 
-3. **Start Using**
-   - After successful connection, you can:
-     - Chat with AI
-     - Manage documents in "Knowledge" tab
-     - View conversation history
-     - Adjust Agent settings
+3. **开始使用**
+   - 连接成功后，您可以：
+     - 与AI对话
+     - 在「Knowledge」标签页管理文档
+     - 查看对话历史
+     - 调整Agent设置
 
-### AgentOS Features
+### AgentOS功能说明
 
-#### 1. Chat Interface
+#### 1. 对话界面（Chat）
 
-- Enter questions, AI automatically calls `query_documents` tool
-- Supports multi-turn conversations, AI remembers context
-- Can upload new documents at any time
+- 输入问题，AI会自动调用 `query_documents` 工具
+- 支持多轮对话，AI会记住上下文
+- 可以随时上传新文档
 
-#### 2. Knowledge Base Management
+#### 2. 知识库管理（Knowledge）
 
-- **View Documents**: Display all uploaded documents
-- **Upload Documents**:
-  - Click "Upload" button
-  - Select PDF files (supports multiple selection)
-  - System automatically parses and stores
-- **Delete Documents**: Click delete button next to document
+- **查看文档**：显示所有已上传的文档
+- **上传文档**：
+  - 点击「Upload」按钮
+  - 选择PDF文件（支持多选）
+  - 系统自动解析并存储
+- **删除文档**：点击文档旁的删除按钮
 
-#### 3. Tool Invocation
+#### 3. 工具调用
 
-AI automatically calls the following tools:
+AI会自动调用以下工具：
 
-- `query_documents`: Query document content (automatically uses CRAG)
-- `upload_pdf_document`: Upload single PDF
-- `list_documents`: List all documents
-- `delete_document`: Delete specified document
+- `query_documents`：查询文档内容（自动使用CRAG）
+- `upload_pdf_document`：上传单个PDF
+- `list_documents`：列出所有文档
+- `delete_document`：删除指定文档
 
-You can say directly in conversation:
-- "Upload this PDF"
-- "List all documents"
-- "Delete document with ID xxx"
+您可以在对话中直接说：
+- "上传这个PDF"
+- "列出所有文档"
+- "删除文档ID为xxx的文档"
 
 ---
 
-## Strategy Configuration
+## 策略配置
 
-### CRAG Core Parameters
+### CRAG核心参数
 
-#### 1. Evaluator Configuration
+#### 1. 评估器配置
 
 ```bash
-# Enable/Disable T5 Evaluator
+# 启用/禁用T5评估器
 ENABLE_T5_EVALUATOR=true
 
-# T5 Batch Size (affects GPU utilization)
-# Recommended values:
+# T5批处理大小（影响GPU利用率）
+# 建议值：
 #   CPU: 4-8
 #   GPU 6GB: 8-12
 #   GPU 8GB: 12-16
 #   GPU 12GB+: 16-32
 T5_BATCH_SIZE=12
 
-# T5 Model Path
+# T5模型路径
 T5_EVALUATOR_PATH=finetuned_t5_evaluator
 ```
 
-#### 2. Action Router Thresholds
+#### 2. 动作路由阈值
 
-Configure in `get_action_router()` function in `rag_tools.py`:
+在 `rag_tools.py` 的 `get_action_router()` 函数中配置：
 
 ```python
 router = CompleteActionRouter(
     evaluator=evaluator,
     web_searcher=web_searcher,
-    upper_threshold=0.6,  # Correct threshold (above = high quality)
-    lower_threshold=0.2,  # Incorrect threshold (below = low quality)
+    upper_threshold=0.6,  # Correct阈值（高于此值=高质量）
+    lower_threshold=0.2,  # Incorrect阈值（低于此值=低质量）
 )
 ```
 
-**Threshold Adjustment Recommendations**:
+**阈值调整建议**：
 
-| Scenario | upper_threshold | lower_threshold | Description |
-|----------|----------------|----------------|-------------|
-| Strict Mode | 0.7 | 0.3 | More ambiguous, more refinement |
-| Balanced Mode | 0.6 | 0.2 | Default, balances accuracy and performance |
-| Relaxed Mode | 0.5 | 0.1 | More correct, faster response |
+| 场景 | upper_threshold | lower_threshold | 说明 |
+|------|----------------|----------------|------|
+| 严格模式 | 0.7 | 0.3 | 更多ambiguous，更多精炼 |
+| 平衡模式 | 0.6 | 0.2 | 默认，平衡准确度和性能 |
+| 宽松模式 | 0.5 | 0.1 | 更多correct，更快响应 |
 
-#### 3. Retrieval Parameters
+#### 3. 检索参数
 
-When querying in conversation, the system defaults to:
+在对话中查询时，系统默认使用：
 
 ```python
 query_documents(
-    query="Your question",
-    top_k=10,        # Number of documents to retrieve
-    threshold=0.15,  # Similarity threshold
-    mode="excerption" # Knowledge refinement mode
+    query="您的问题",
+    top_k=10,        # 检索文档数量
+    threshold=0.15,  # 相似度阈值
+    mode="excerption" # 知识精炼模式
 )
 ```
 
-**Parameter Explanation**:
+**参数说明**：
 
-- **top_k** (5-20):
-  - Larger: Higher recall, but slower
-  - Smaller: Faster, but may miss relevant documents
-  - Recommended: 10
+- **top_k**（5-20）：
+  - 越大：召回率更高，但速度更慢
+  - 越小：速度更快，但可能遗漏相关文档
+  - 推荐：10
 
-- **threshold** (0.0-1.0):
-  - Higher: Only returns high-similarity documents, may have insufficient recall
-  - Lower: Returns more documents, may include noise
-  - Recommended: 0.15
+- **threshold**（0.0-1.0）：
+  - 越高：只返回高相似度文档，可能召回不足
+  - 越低：返回更多文档，可能包含噪音
+  - 推荐：0.15
 
-- **mode** (excerption/original):
-  - `excerption`: Enable knowledge refinement (recommended)
-  - `original`: Use original documents
+- **mode**（excerption/original）：
+  - `excerption`：启用知识精炼（推荐）
+  - `original`：使用原始文档
 
-#### 4. Fast Path Configuration
+#### 4. 快速路径配置
 
 ```bash
-# Disable Fast Path (force full CRAG)
+# 禁用快速路径（强制完整CRAG）
 DISABLE_FAST_PATH=false
 
-# Fast Path trigger conditions (in crag_layer.py)
-FAST_PATH_SCORE_THRESHOLD=0.95  # Retrieval score threshold
-FAST_PATH_MAX_DOCS=15           # Maximum document count
+# 快速路径触发条件（在crag_layer.py中）
+FAST_PATH_SCORE_THRESHOLD=0.95  # 检索分数阈值
+FAST_PATH_MAX_DOCS=15           # 最大文档数
 ```
 
-### Web Search Configuration
+### Web搜索配置
 
 ```bash
-# Enable Web Search
+# 启用Web搜索
 ENABLE_WEB_SEARCH=true
 
-# SerpAPI Configuration
+# SerpAPI配置
 SERPAPI_KEY=your-key
 
-# Web search parameters (in rag_tools.py)
-WEB_SEARCH_NUM_RESULTS=5  # Number of search results
+# Web搜索参数（在rag_tools.py中）
+WEB_SEARCH_NUM_RESULTS=5  # 搜索结果数
 ```
 
-### Logging and Debugging
+### 日志和调试
 
 ```bash
-# Enable verbose logging
+# 启用详细日志
 VERBOSE_CRAG=true
 
-# Logs will show:
-# - Retrieval process details
-# - CRAG evaluation scores
-# - Action routing decisions
-# - Knowledge refinement results
-# - Performance statistics
+# 日志会显示：
+# - 检索过程细节
+# - CRAG评估分数
+# - 动作路由决策
+# - 知识精炼结果
+# - 性能统计
 ```
 
 ---
 
-## Performance Optimization
+## 性能优化
 
-### GPU Acceleration Configuration
+### GPU加速配置
 
-#### Check GPU Support
+#### 检查GPU支持
 
 ```bash
-# Check GPU
+# 检查GPU
 nvidia-smi
 
-# Verify PyTorch GPU support
+# 验证PyTorch GPU支持
 uv run python -c "import torch; print(torch.cuda.is_available())"
 ```
 
-#### GPU Configuration
+#### GPU配置
 
-The project is already configured for GPU support. If issues occur:
+项目已自动配置GPU支持。如果遇到问题：
 
-1. **Verify GPU version torch is installed**:
+1. **确认安装GPU版本torch**：
    ```bash
    uv pip list | grep torch
-   # Should show: torch 2.5.1+cu121
+   # 应显示: torch 2.5.1+cu121
    ```
 
-2. **If CPU version is shown**:
+2. **如果显示CPU版本**：
    ```bash
-   # Reinstall
+   # 重新安装
    uv pip uninstall torch
    uv sync
    ```
 
-3. **Adjust batch size**:
+3. **调整批处理大小**：
    ```bash
-   # In .env, adjust based on GPU memory
-   T5_BATCH_SIZE=16  # For 8GB VRAM
+   # .env中，根据GPU显存调整
+   T5_BATCH_SIZE=16  # 8GB显存
    ```
 
-### Performance Benchmarks
+### 性能基准
 
-| Configuration | 10 Doc Evaluation Time | Throughput | Speedup |
-|---------------|----------------------|------------|---------|
-| CPU (i7) | ~30-40 sec | ~3 docs/sec | Baseline |
-| GPU (RTX 3060 6GB) | ~2-3 sec | ~30 docs/sec | 10x |
-| GPU (RTX 3070 8GB) | ~1-2 sec | ~50 docs/sec | 15x |
-| GPU (RTX 4070 12GB) | ~0.5-1 sec | ~100 docs/sec | 30x |
+| 配置 | 10文档评估耗时 | 吞吐量 | 提升 |
+|------|--------------|--------|------|
+| CPU (i7) | ~30-40秒 | ~3文档/秒 | 基准 |
+| GPU (RTX 3060 6GB) | ~2-3秒 | ~30文档/秒 | 10倍 |
+| GPU (RTX 3070 8GB) | ~1-2秒 | ~50文档/秒 | 15倍 |
+| GPU (RTX 4070 12GB) | ~0.5-1秒 | ~100文档/秒 | 30倍 |
 
-### Cache Optimization
+### 缓存优化
 
-System automatically caches:
-- Document vectors
-- T5 evaluator instance
-- Retrieval results
+系统自动缓存：
+- 文档向量
+- T5评估器实例
+- 检索结果
 
-**Clear cache**:
+**清理缓存**：
 ```bash
 # Windows
 Get-ChildItem -Path . -Include __pycache__ -Recurse -Force | Remove-Item -Force -Recurse
@@ -658,25 +653,25 @@ find . -type d -name __pycache__ -exec rm -r {} +
 
 ---
 
-## FAQ
+## 常见问题
 
-### Installation
+### 安装相关
 
-**Q: What if uv installation fails?**
+**Q: uv安装失败怎么办？**
 
-A: You can use pip:
+A: 可以使用pip：
 ```bash
 pip install -r requirements.txt
 python agno_agent.py
 ```
 
-**Q: GPU version torch installation fails?**
+**Q: GPU版torch安装失败？**
 
-A: Check CUDA version:
+A: 检查CUDA版本：
 ```bash
-nvidia-smi  # Check CUDA Version
+nvidia-smi  # 查看CUDA Version
 
-# Install based on version:
+# 根据版本安装：
 # CUDA 11.8
 uv pip install torch --index-url https://download.pytorch.org/whl/cu118
 
@@ -684,149 +679,149 @@ uv pip install torch --index-url https://download.pytorch.org/whl/cu118
 uv pip install torch --index-url https://download.pytorch.org/whl/cu121
 ```
 
-### Configuration
+### 配置相关
 
-**Q: Cannot find .env file?**
+**Q: 找不到.env文件？**
 
-A: Create manually:
+A: 手动创建：
 ```bash
-# Copy example file
+# 复制示例文件
 copy .env.example .env  # Windows
 cp .env.example .env    # Linux/macOS
 
-# Or create manually and fill in content
+# 或手动创建并填写内容
 ```
 
-**Q: API key error?**
+**Q: API key错误？**
 
-A: Check:
-1. Key in `.env` file is correct
-2. No extra spaces before or after key
-3. Restart service for config to take effect
+A: 检查：
+1. `.env` 文件中的key是否正确
+2. key前后没有多余空格
+3. 重启服务让配置生效
 
-### Runtime
+### 运行相关
 
-**Q: Startup shows "T5 model not found"?**
+**Q: 启动时提示"T5 model not found"？**
 
 A: 
-1. If no T5 model, set in `.env`:
+1. 如果没有T5模型，在 `.env` 中设置：
    ```bash
    ENABLE_T5_EVALUATOR=false
    ```
-2. Or obtain pre-trained T5 model
+2. 或获取预训练T5模型
 
-**Q: AgentOS connection failed?**
+**Q: AgentOS连接失败？**
 
-A: Check:
-1. Service started normally (see "Access URL" in logs)
-2. Port 7777 not occupied
-3. Firewall not blocking
-4. Use `http://127.0.0.1:7777` instead of `localhost`
+A: 检查：
+1. 服务是否正常启动（看到"访问地址"日志）
+2. 端口7777是否被占用
+3. 防火墙是否阻止
+4. 使用 `http://127.0.0.1:7777` 而非 `localhost`
 
-**Q: Query is slow?**
-
-A: 
-1. Enable GPU acceleration (10-40x performance improvement)
-2. Adjust `T5_BATCH_SIZE` to increase batch processing
-3. Enable fast path: `DISABLE_FAST_PATH=false`
-4. Reduce `top_k` value (e.g., change to 5)
-
-### Usage
-
-**Q: AI answers are inaccurate?**
+**Q: 查询很慢怎么办？**
 
 A: 
-1. Ensure relevant documents are uploaded
-2. Check if documents are parsed correctly
-3. Adjust CRAG threshold (increase `upper_threshold`)
-4. Enable verbose logging to view evaluation scores
+1. 启用GPU加速（性能提升10-40倍）
+2. 调整 `T5_BATCH_SIZE` 增加批处理
+3. 启用快速路径：`DISABLE_FAST_PATH=false`
+4. 减少 `top_k` 值（如改为5）
 
-**Q: How to upload many PDFs?**
+### 使用相关
 
-A: 
-1. Use `upload_pdf_directory` tool
-2. Say in conversation: "Upload folder /path/to/pdfs"
-3. Or use API for batch upload
-
-**Q: How to clear knowledge base?**
+**Q: AI回答不准确？**
 
 A: 
-1. Say in conversation: "Clear knowledge base"
-2. Or delete manually:
+1. 确保上传了相关文档
+2. 检查文档是否正确解析
+3. 调整CRAG阈值（提高 `upper_threshold`）
+4. 启用详细日志查看评估分数
+
+**Q: 如何上传大量PDF？**
+
+A: 
+1. 使用 `upload_pdf_directory` 工具
+2. 在对话中说："上传文件夹 /path/to/pdfs"
+3. 或使用API批量上传
+
+**Q: 如何清空知识库？**
+
+A: 
+1. 在对话中说："清空知识库"
+2. 或手动删除：
    ```bash
-   rm -rf tmp/lancedb/*  # Vector data
-   rm tmp/knowledge_contents.db  # Content database
+   rm -rf tmp/lancedb/*  # 向量数据
+   rm tmp/knowledge_contents.db  # 内容数据库
    ```
 
 ---
 
-## Project Structure
+## 项目结构
 
 ```
 Agno-CRAG/
-├── agno_agent.py              # Main program entry
-├── rag_tools.py               # RAG tool implementation
-├── crag_core.py               # CRAG core components
-├── crag_layer.py              # CRAG evaluation layer
-├── document_processor.py      # Document processing
-├── persistent_vector_store.py # Vector storage
-├── pyproject.toml             # Project configuration
-├── .env                       # Environment variables (needs creation)
-├── .env.example               # Environment variable template
-├── README.md                  # This document
-├── finetuned_t5_evaluator/    # T5 model directory
-├── tmp/                       # Temporary files
-│   ├── lancedb/              # Vector database
-│   ├── data.db               # Agent data
-│   └── knowledge_contents.db # Knowledge base content
-└── rag_database.db           # RAG database
+├── agno_agent.py              # 主程序入口
+├── rag_tools.py               # RAG工具实现
+├── crag_core.py               # CRAG核心组件
+├── crag_layer.py              # CRAG评估层
+├── document_processor.py      # 文档处理
+├── persistent_vector_store.py # 向量存储
+├── pyproject.toml             # 项目配置
+├── .env                       # 环境变量（需创建）
+├── .env.example               # 环境变量模板
+├── README.md                  # 本文档
+├── finetuned_t5_evaluator/    # T5模型目录
+├── tmp/                       # 临时文件
+│   ├── lancedb/              # 向量数据库
+│   ├── data.db               # Agent数据
+│   └── knowledge_contents.db # 知识库内容
+└── rag_database.db           # RAG数据库
 ```
 
 ---
 
-## Tech Stack
+## 技术栈
 
-- **Framework**: Agno 2.2.13+
-- **LLM**: DeepSeek V3.1
-- **Vector Database**: LanceDB
-- **Embedding Model**: Sentence-Transformers
-- **Evaluation Model**: T5 (fine-tuned)
-- **Web Framework**: FastAPI
-- **UI**: AgentOS
-
----
-
-## Roadmap
-
-- Support for more document formats (Word, Excel, Markdown)
-- Multi-language support (optimize Chinese processing)
-- Conversation history management
-- Document version control
-- Batch evaluation and testing framework
-- Docker deployment support
+- **框架**：Agno 2.2.13+
+- **LLM**：DeepSeek V3.1
+- **向量数据库**：LanceDB
+- **嵌入模型**：Sentence-Transformers
+- **评估模型**：T5 (fine-tuned)
+- **Web框架**：FastAPI
+- **UI**：AgentOS
 
 ---
 
-## License
+## 开发路线图
+
+- 支持更多文档格式（Word、Excel、Markdown）
+- 多语言支持（优化中文处理）
+- 对话历史管理
+- 文档版本控制
+- 批量评估和测试框架
+- Docker部署支持
+
+---
+
+## 许可证
 
 MIT License
 
 ---
 
-## Contributing
+## 贡献
 
-Issues and Pull Requests are welcome!
-
----
-
-## Contact
-
-- GitHub Issues: [Project Issues Page](https://github.com/Xarmian10/Agno-CRAG/issues)
-- Email: contact@example.com
+欢迎提交Issue和Pull Request！
 
 ---
 
-## Acknowledgments
+## 联系方式
+
+- GitHub Issues: [项目Issues页面](https://github.com/Xarmian10/Agno-CRAG/issues)
+- 邮箱: contact@example.com
+
+---
+
+## 致谢
 
 - [Agno Framework](https://github.com/agno-agi/agno)
 - [CRAG Paper](https://arxiv.org/abs/2401.15884)
@@ -835,6 +830,6 @@ Issues and Pull Requests are welcome!
 
 ---
 
-**Last Updated**: 2025-11-19
+**最后更新**: 2025-11-19
 
-**Get Started**: `uv sync && uv run python agno_agent.py`
+**开始使用**: `uv sync && uv run python agno_agent.py`

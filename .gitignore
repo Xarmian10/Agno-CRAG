@@ -1,30 +1,31 @@
-# Python-generated files
+# Python
 __pycache__/
-*.py[oc]
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
 wheels/
-*.egg-info
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Virtual environments
-.venv
+# Virtual Environment
 venv/
+ENV/
 env/
-
-# Environment variables (contains sensitive API keys)
-.env
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-rag_database.db
-agno.db
-
-# Temporary files and directories
-tmp/
-*.log
+.venv
 
 # IDE
 .vscode/
@@ -32,16 +33,51 @@ tmp/
 *.swp
 *.swo
 *~
-
-# OS files
 .DS_Store
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# LanceDB
+lancedb/
+*.lance/
+
+# Logs
+*.log
+logs/
+
+# Temp files
+tmp/
+temp/
+*.tmp
+
+# Model cache
+models/
+*.bin
+*.safetensors
+finetuned_t5_evaluator/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# OS
 Thumbs.db
+.DS_Store
 
-# Model files (large, should be downloaded separately)
-# finetuned_t5_evaluator/
-
-# PDF files (example documents, can be removed if needed)
-pdf/
-
-# Lock files (optional, some prefer to commit)
-# uv.lock
+# Project specific
+agno_knowledge.db
+storage/

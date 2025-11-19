@@ -1,0 +1,41 @@
+# Agno-RAG Dependencies
+# Python 3.10+ required
+
+# === Core Framework ===
+agno>=1.5.0
+agno-os>=0.1.0
+
+# === Vector Database ===
+lancedb>=0.3.0
+pyarrow>=14.0.0
+
+# === Embeddings & NLP ===
+sentence-transformers>=2.2.0
+transformers>=4.30.0
+torch>=2.0.0
+sentencepiece>=0.1.99
+
+# === PDF Processing ===
+pypdf>=3.0.0
+
+# === Web Framework ===
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+python-multipart>=0.0.6
+
+# === Utilities ===
+python-dotenv>=1.0.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+
+# === Database ===
+sqlalchemy>=2.0.0
+
+# === Optional: Web Search ===
+# google-api-python-client>=2.0.0
+
+# === Development (Optional) ===
+# pytest>=7.4.0
+# black>=23.0.0
+# flake8>=6.0.0
+

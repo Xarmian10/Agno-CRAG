@@ -49,6 +49,7 @@ from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.os import AgentOS
 from agno.models.openai import OpenAILike
+
 from typing import Optional
 
 from rag_tools import RAGTools
@@ -153,31 +154,78 @@ if KNOWLEDGE_BASE_AVAILABLE and Knowledge and VECTOR_DB_TYPE:
             # Configure embedder - use SentenceTransformer (local, no API key needed)
             # or OpenAIEmbedder with SiliconFlow if available
             embedder = None
+            # Set HuggingFace cache directory (before try block for error messages)
+            import os
+            hf_cache_dir = os.getenv("HF_HOME", os.path.join(os.path.expanduser("~"), ".cache", "huggingface"))
+            
             if SENTENCE_TRANSFORMER_AVAILABLE and SentenceTransformerEmbedder:
                 # Use local SentenceTransformer model (no API key needed)
                 # This is better for Chinese text and doesn't require API calls
                 try:
-                    embedder = SentenceTransformerEmbedder(
-                        id="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
-                        # This model supports both English and Chinese
-                    )
-                    safe_write_stderr("  嵌入器: SentenceTransformer (本地模型，支持中英文)\n")
-                    safe_write_stderr(f"  模型: paraphrase-multilingual-MiniLM-L12-v2\n")
+                    # Configure HuggingFace to use local cache and handle SSL issues
+                    # Enable offline mode if model is cached
+                    # Set SSL verification to avoid SSL errors (for Chinese users)
+                    os.environ.setdefault("HF_HUB_DISABLE_EXPERIMENTAL_WARNING", "1")
+                    
+                    # Try to use HuggingFace mirror (for Chinese users)
+                    # You can set HF_ENDPOINT environment variable to use mirror
+                    if not os.getenv("HF_ENDPOINT"):
+                        # Try to use HF mirror if available (uncomment to enable)
+                        # Note: This is optional, uncomment if you're in China and have SSL issues
+                        # os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+                        pass
+                    
+                    # Note: Windows doesn't support signal-based timeout well
+                    # We'll just try to load models and catch errors gracefully
+                    # Set a timeout for model loading attempts (informational, for user reference)
+                    model_load_timeout = 30
+                    
+                    # Try to use a lighter, commonly cached model first
+                    model_ids = [
+                        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",  # Original model
+                        "sentence-transformers/all-MiniLM-L6-v2",  # Lighter alternative
+                        "BAAI/bge-small-zh-v1.5",  # Chinese-focused model (if available)
+                    ]
+                    
+                    embedder = None
+                    for model_id in model_ids:
+                        try:
+                            safe_write_stderr(f"  尝试加载模型: {model_id} (超时: {model_load_timeout}秒)...\n")
+                            # Try to load model (timeout handling is limited on Windows)
+                            # For Windows, we'll just try and catch errors
+                            embedder = SentenceTransformerEmbedder(id=model_id)
+                            safe_write_stderr(f"  嵌入器: SentenceTransformer (本地模型，支持中英文)\n")
+                            safe_write_stderr(f"  模型: {model_id}\n")
+                            break
+                        except Exception as model_error:
+                            error_msg = str(model_error)
+                            # Check if it's a network/SSL error
+                            if "SSL" in error_msg or "Max retries" in error_msg or "Connection" in error_msg or "EOF" in error_msg:
+                                safe_write_stderr(f"    网络/SSL 错误，尝试下一个模型...\n")
+                                safe_write_stderr(f"    提示: 如果所有模型都失败，可以设置 HF_ENDPOINT=https://hf-mirror.com 使用镜像\n")
+                                continue
+                            # If it's a different error, log and continue
+                            safe_write_stderr(f"    加载失败: {type(model_error).__name__}: {error_msg[:100]}\n")
+                            continue
+                    
+                    if embedder is None:
+                        safe_write_stderr(f"  警告: 所有 SentenceTransformer 模型加载失败\n")
+                        safe_write_stderr(f"  提示: 请确保网络连接正常，或手动下载模型到缓存目录\n")
+                        safe_write_stderr(f"  HuggingFace 缓存目录: {hf_cache_dir}\n")
+                        
                 except Exception as e:
                     safe_write_stderr(f"  警告: SentenceTransformer 初始化失败: {str(e)}\n")
                     safe_write_stderr(f"  错误详情: {type(e).__name__}: {str(e)}\n")
                     embedder = None
             
-            if embedder is None and OPENAI_EMBEDDER_AVAILABLE and OpenAIEmbedder:
-                # Fallback: Try to use OpenAIEmbedder with SiliconFlow
-                # Note: This may not work if SiliconFlow doesn't support embeddings
-                try:
-                    # Check if we can use SiliconFlow for embeddings
-                    # Most likely this won't work, so we'll skip it
-                    safe_write_stderr("  警告: 未配置嵌入器，将使用默认 OpenAIEmbedder（需要 OpenAI API key）\n")
-                    safe_write_stderr("  建议: 安装 sentence-transformers 以使用本地嵌入模型\n")
-                except Exception:
-                    pass
+            # If embedder is None, try to create vector_db without embedder
+            # LanceDB might have a default embedder or will use one from the Knowledge class
+            if embedder is None:
+                safe_write_stderr("  警告: 未配置 SentenceTransformer 嵌入器\n")
+                safe_write_stderr("  提示: 将在没有嵌入器的情况下创建向量数据库\n")
+                safe_write_stderr("  建议: 修复网络连接或手动下载模型到缓存目录\n")
+                safe_write_stderr(f"  缓存目录: {hf_cache_dir}\n")
+                safe_write_stderr("  或者设置环境变量: HF_ENDPOINT=https://hf-mirror.com\n")
             
             # Create vector database
             # Note: embedder can be passed to vector_db or Knowledge
@@ -189,7 +237,22 @@ if KNOWLEDGE_BASE_AVAILABLE and Knowledge and VECTOR_DB_TYPE:
             if embedder:
                 vector_db_kwargs["embedder"] = embedder
             
-            vector_db = LanceDb(**vector_db_kwargs)
+            # Try to create vector_db even without embedder
+            # LanceDB might have a default or Knowledge will handle it
+            try:
+                vector_db = LanceDb(**vector_db_kwargs)
+            except Exception as vdb_error:
+                if embedder is None:
+                    safe_write_stderr(f"  [错误] 无法创建向量数据库: {str(vdb_error)}\n")
+                    safe_write_stderr(f"  向量数据库需要嵌入器，但所有嵌入器都加载失败\n")
+                    safe_write_stderr(f"  建议: 修复网络连接问题或使用 OpenAIEmbedder（需要 API key）\n")
+                    raise RuntimeError(
+                        "无法创建向量数据库: 缺少嵌入器。"
+                        "请修复网络连接以下载 SentenceTransformer 模型，"
+                        "或设置 HF_ENDPOINT=https://hf-mirror.com 使用镜像。"
+                    ) from vdb_error
+                else:
+                    raise
             
             # Set up ContentsDB - tracks content metadata
             # Using SQLite for development (as shown in the example)
@@ -318,13 +381,25 @@ agent_kwargs = {
     "markdown": True,
     "instructions": (
         "You are a helpful assistant with access to a knowledge base of PDF documents. "
-        "When users ask questions, use the 'query_documents' tool to search the knowledge base. "
-        "If relevant information is found, use it to answer the question. "
         "\n\n"
+        "**IMPORTANT: When users ask questions about documents, you MUST use the 'query_documents' tool.** "
+        "This tool provides CRAG (Corrective Retrieval Augmented Generation) which includes:\n"
+        "- Semantic evaluation of retrieved documents\n"
+        "- Quality-based action routing (Correct/Incorrect/Ambiguous)\n"
+        "- Knowledge refinement (decompose-then-recompose)\n"
+        "- Optional web search augmentation for low-quality retrievals\n"
+        "\n"
+        "Always use 'query_documents' when users:\n"
+        "- Ask questions about document content\n"
+        "- Request information from uploaded PDFs\n"
+        "- Reference specific document IDs (e.g., 'GB146', 'GB10494')\n"
+        "- Need technical standards or regulations information\n"
+        "\n"
         "Document Management Tools:\n"
         "- 'upload_pdf_document': Upload a single PDF file to the knowledge base. Requires file_path parameter.\n"
         "- 'upload_pdf_directory': Upload all PDF files from a directory. Requires directory path. "
         "  Optional: pattern (default: '*.pdf'), recursive (default: False).\n"
+        "- 'query_documents': Query documents using CRAG. Use this for all document searches.\n"
         "- 'list_documents': List all documents in the knowledge base.\n"
         "- 'delete_document': Delete a specific document by doc_id.\n"
         "- 'clear_knowledge_base': Clear all documents from the knowledge base (use with caution!).\n"
@@ -342,15 +417,17 @@ if knowledge_base:
     # Verify contents_db is configured (required for AgentOS)
     if hasattr(knowledge_base, 'contents_db') and knowledge_base.contents_db:
         agent_kwargs["knowledge"] = knowledge_base
-        agent_kwargs["search_knowledge"] = True  # Enable automatic knowledge search
+        # IMPORTANT: Disable automatic search to use query_documents tool with CRAG
+        # search_knowledge=True would bypass our CRAG evaluation pipeline
+        agent_kwargs["search_knowledge"] = False  # Force use of query_documents with CRAG
         safe_write_stderr(f"知识库已添加到 Agent: {knowledge_base.name}\n")
-        safe_write_stderr(f"  自动搜索: 已启用\n")
+        safe_write_stderr(f"  自动搜索: 已禁用（使用 query_documents 工具 + CRAG）\n")
         safe_write_stderr(f"  ContentsDB: 已配置（AgentOS Knowledge 页面可用）\n")
     else:
         safe_write_stderr("警告: 知识库缺少 ContentsDB，AgentOS Knowledge 页面可能不可用\n")
         # Still add knowledge base even without contents_db for basic functionality
         agent_kwargs["knowledge"] = knowledge_base
-        agent_kwargs["search_knowledge"] = True
+        agent_kwargs["search_knowledge"] = False  # Use query_documents with CRAG
 else:
     safe_write_stderr("警告: 知识库未添加到 Agent，AgentOS Knowledge 部分可能不可用\n")
 

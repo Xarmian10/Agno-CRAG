@@ -499,9 +499,10 @@ def _query_documents_impl(
     Returns:
         Dictionary with retrieved passages, CRAG action, and context.
     """
+    # CRITICAL: Import os FIRST before any other operations
+    import os
     import time
     import sqlite3
-    import os  # Ensure os is available in function scope
     total_start = time.time()
     
     # Load CRAG thresholds from environment variables if available
@@ -955,6 +956,12 @@ def _query_documents_impl(
         crag_start = time.time()
         use_complete_crag = os.getenv("USE_COMPLETE_CRAG", "true").lower() == "true"
         
+        # Initialize action_router to None (will be set in else branch if needed)
+        action_router = None
+        
+        # Check if fast path optimization is disabled (for performance evaluation)
+        disable_fast_path = os.getenv("DISABLE_FAST_PATH", "false").lower() == "true"
+        
         # Smart CRAG optimization: Skip expensive T5 evaluation when results are clearly relevant
         # Conditions for fast path (skip full CRAG):
         # 1. Found enough results (>= top_k)
@@ -964,7 +971,11 @@ def _query_documents_impl(
         skip_full_crag = False
         fast_path_reason = ""
         
-        if len(hits) >= top_k:
+        if disable_fast_path:
+            # Fast path is disabled - force complete CRAG evaluation
+            log_to_console("\n[性能评估模式] 快速路径已禁用，强制使用完整 CRAG")
+            skip_full_crag = False
+        elif len(hits) >= top_k:
             # Check if top results have good scores
             top_scores = [score for score, _ in hits[:top_k]]
             avg_top_score = sum(top_scores) / len(top_scores) if top_scores else 0.0
@@ -1194,9 +1205,17 @@ def _query_documents_impl(
             "using_complete_crag": action_router is not None,
         }
     except Exception as e:
+        # Ensure os is available for error reporting
+        import os
+        import traceback
+        error_msg = str(e)
+        # Provide more detailed error information
+        error_type = type(e).__name__
         return {
             "success": False,
-            "error": str(e),
+            "error": error_msg,
+            "error_type": error_type,
+            "traceback": traceback.format_exc() if "os" in error_msg.lower() or "name" in error_msg.lower() else None,
         }
 
 
@@ -1226,15 +1245,40 @@ def query_documents(
     - CRAG_SIMILARITY_THRESHOLD (default: 0.15)
     - CRAG_DECOMPOSE_MODE (default: 'excerption')
     """
-    # Load defaults from environment variables if not provided
-    if top_k is None:
-        top_k = int(os.getenv("CRAG_TOP_K", "5"))
-    if similarity_threshold is None:
-        similarity_threshold = float(os.getenv("CRAG_SIMILARITY_THRESHOLD", "0.15"))
-    if decompose_mode is None:
-        decompose_mode = os.getenv("CRAG_DECOMPOSE_MODE", "excerption")
-    
-    return _query_documents_impl(query, top_k, similarity_threshold, decompose_mode, doc_id_filter)
+    try:
+        import os  # Ensure os is available in function scope (CRITICAL: must be first)
+        # Load defaults from environment variables if not provided
+        if top_k is None:
+            top_k = int(os.getenv("CRAG_TOP_K", "5"))
+        if similarity_threshold is None:
+            similarity_threshold = float(os.getenv("CRAG_SIMILARITY_THRESHOLD", "0.15"))
+        if decompose_mode is None:
+            decompose_mode = os.getenv("CRAG_DECOMPOSE_MODE", "excerption")
+        
+        return _query_documents_impl(query, top_k, similarity_threshold, decompose_mode, doc_id_filter)
+    except NameError as e:
+        # Specifically handle NameError for undefined variables
+        if "'os'" in str(e) or "os" in str(e).lower():
+            # This should never happen if import os is at the top, but handle it anyway
+            import os
+            import traceback
+            return {
+                "success": False,
+                "error": f"Import error: {str(e)}. Traceback: {traceback.format_exc()}",
+                "error_type": "NameError",
+                "hint": "os module should be imported at function start",
+            }
+        else:
+            raise
+    except Exception as e:
+        # Catch any other exceptions
+        import traceback
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "traceback": traceback.format_exc(),
+        }
 
 
 def _list_documents_impl() -> Dict[str, object]:

@@ -1,477 +1,762 @@
-# AGNO-CRAG - CRAG 增强的检索增强生成系统
+# Agno-RAG：基于 CRAG 的智能文档问答系统
 
-一个基于 Agno 框架的智能文档问答系统，集成了 CRAG (Corrective Retrieval Augmented Generation) 技术，支持 PDF 文档上传、智能检索和知识问答。
+<div align="center">
 
-## 📋 目录
+**一个实现了 CRAG（Corrective Retrieval Augmented Generation）论文的高级 RAG 系统**
 
-- [功能特性](#功能特性)
-- [系统要求](#系统要求)
-- [快速开始](#快速开始)
-- [详细配置](#详细配置)
-- [AgentOS 连接](#agnoos-连接)
-- [使用指南](#使用指南)
-- [项目结构](#项目结构)
-- [常见问题](#常见问题)
-- [技术架构](#技术架构)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Agno](https://img.shields.io/badge/Agno-Framework-green.svg)](https://agno.com)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## ✨ 功能特性
+[功能特点](#-功能特点) • [快速开始](#-快速开始) • [项目架构](#-项目架构) • [CRAG 原理](#-crag-原理) • [使用指南](#-使用指南) • [配置说明](#-配置说明)
+
+</div>
+
+---
+
+## 📖 项目简介
+
+Agno-RAG 是一个基于 **CRAG（Corrective Retrieval Augmented Generation）** 论文实现的高级 RAG 系统。与传统 RAG 系统不同，CRAG 能够自动评估检索质量，并根据评估结果采取不同的纠正策略，显著提高了问答准确性和鲁棒性。
+
+### 什么是 RAG？
+
+**RAG（Retrieval-Augmented Generation）** = 检索增强生成
+
+传统 LLM 的问题：
+- ❌ 知识固化（训练后无法更新）
+- ❌ 容易"幻觉"（编造不存在的信息）
+- ❌ 无法访问私有/专业文档
+
+RAG 的解决方案：
+- ✅ 从外部知识库检索相关文档
+- ✅ 将检索结果作为上下文提供给 LLM
+- ✅ LLM 基于真实文档回答问题
+
+### 什么是 CRAG？
+
+**CRAG（Corrective Retrieval Augmented Generation）** = 纠正式检索增强生成
+
+传统 RAG 的问题：
+- ❌ 无法判断检索质量（如果检索错误怎么办？）
+- ❌ 盲目使用所有检索结果（包含大量无关信息）
+- ❌ 缺少纠正机制
+
+CRAG 的创新：
+- ✅ **智能评估**：自动评估每个检索文档的相关性
+- ✅ **动作路由**：根据评估结果采取不同策略
+  - **Correct**：检索质量高 → 精炼知识片段
+  - **Incorrect**：检索质量低 → 使用 Web 搜索
+  - **Ambiguous**：质量不确定 → 组合两者
+- ✅ **知识精炼**：Decompose-then-recompose 算法过滤无关信息
+
+---
+
+## ✨ 功能特点
 
 ### 核心功能
 
-1. **PDF 文档管理**
-   - 单文件上传：支持上传单个 PDF 文档
-   - 批量上传：支持上传整个目录下的所有 PDF 文件
-   - 文档列表：查看所有已上传的文档
-   - 文档删除：删除指定文档
-   - 清空知识库：一键清空所有文档（谨慎使用）
+- **📄 PDF 文档管理**
+  - 支持上传单个/批量 PDF 文档
+  - 自动提取文本并分页处理
+  - 支持中文和多语言文档
 
-2. **智能检索 (CRAG)**
-   - 语义检索：基于向量相似度的智能文档检索
-   - CRAG 评估：自动评估检索结果的质量
-   - 文档分解：将长文档分解为更小的片段进行精确匹配
-   - 智能路由：根据检索质量自动选择最佳知识源
+- **🔍 智能检索**
+  - 向量语义检索（SentenceTransformer）
+  - 关键词增强检索
+  - 文档 ID 过滤
 
-3. **AgentOS 集成**
-   - Web 界面：通过 AgentOS 进行可视化管理
-   - 知识库管理：在 AgentOS 中直接上传和管理文档
-   - 实时对话：与智能体进行实时问答交互
+- **🧠 CRAG 评估**
+  - 自动评估检索质量
+  - 三种动作路由：Correct / Incorrect / Ambiguous
+  - Decompose-then-recompose 知识精炼
 
-## 🖥️ 系统要求
+- **🌐 Web 搜索增强**（可选）
+  - 检索质量低时自动触发
+  - 支持 Google / Bing / DuckDuckGo
+  - 优先权威来源（Wikipedia、.edu、.gov）
 
-### 必需环境
+### 高级特性
 
-- **Python**: 3.10 或更高版本
-- **操作系统**: Windows / Linux / macOS
-- **内存**: 建议 8GB 以上（使用 T5 评估器需要更多）
-- **存储**: 至少 2GB 可用空间
+- **⚡ 性能优化**
+  - 快速路径：高质量检索自动跳过昂贵的 CRAG 评估
+  - 可配置：强制完整 CRAG 用于性能评估
 
-### 推荐配置
+- **🎯 精确控制**
+  - 环境变量配置所有参数
+  - 文档 ID 过滤
+  - Top-K 结果数量控制
 
-- **GPU**: 可选，但使用 T5 语义评估器时强烈推荐（NVIDIA GPU，支持 CUDA）
-- **内存**: 16GB 或更多（使用完整 CRAG 时）
+- **📊 详细日志**
+  - 检索耗时统计
+  - CRAG 评估过程
+  - Action 判定结果
+
+---
+
+## 🏗️ 项目架构
+
+### 架构图
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         用户界面                              │
+│                    (AgentOS / API)                            │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Agno Agent                               │
+│  - 对话管理                                                   │
+│  - 工具调用 (query_documents, upload_pdf, etc.)              │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     RAG Tools Layer                           │
+│                                                               │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │ upload_pdf   │  │query_documents│  │list_documents│      │
+│  └──────────────┘  └───────┬───────┘  └──────────────┘      │
+│                            │                                  │
+│                            ▼                                  │
+│              ┌──────────────────────────┐                    │
+│              │  _query_documents_impl   │                    │
+│              │  (检索 + CRAG 评估)      │                    │
+│              └──────────┬───────────────┘                    │
+└──────────────────────────┼──────────────────────────────────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+        ▼                  ▼                  ▼
+┌─────────────┐   ┌──────────────┐   ┌─────────────┐
+│ Knowledge   │   │  CRAG Core   │   │Vector Store │
+│   Base      │   │              │   │  (LanceDB)  │
+│ (Agno)      │   │ - Evaluator  │   │             │
+│             │   │ - Router     │   │ Embedder:   │
+│ - Contents  │   │ - Refiner    │   │ Sentence    │
+│   DB        │   │ - Web Search │   │ Transformer │
+│ - Vector DB │   │              │   │             │
+└─────────────┘   └──────────────┘   └─────────────┘
+```
+
+### 目录结构
+
+```
+Agno-RAG/
+├── agno_agent.py              # 主程序：Agent 和 AgentOS 配置
+├── rag_tools.py               # RAG 工具：PDF 上传、文档查询
+├── crag_core.py               # CRAG 核心组件
+│   ├── SemanticRetrievalEvaluator  # T5 语义评估器
+│   ├── CompleteActionRouter        # 动作路由器
+│   ├── WebSearchAugmenter          # Web 搜索
+│   └── EnhancedKnowledgeRefiner    # 知识精炼
+├── crag_layer.py              # CRAG 基础算法
+│   ├── crag_evaluate_and_route     # 评估和路由
+│   ├── _split_into_strips          # 分解算法
+│   └── create_t5_scorer            # T5 评分器创建
+├── document_processor.py      # PDF 文档处理
+├── persistent_vector_store.py # 持久化向量存储
+├── upload_documents.py        # 批量上传工具
+├── env.example                # 环境变量配置示例
+└── pdf/                       # PDF 文档目录
+```
+
+---
+
+## 🎓 CRAG 原理详解
+
+### 传统 RAG vs CRAG
+
+#### 传统 RAG 流程
+
+```
+查询 → 向量检索 → 返回 Top-K 文档 → LLM 生成答案
+```
+
+**问题**：
+- 如果检索错误，LLM 会基于错误信息生成答案
+- 无法判断检索质量
+- 文档中包含大量无关信息
+
+#### CRAG 流程
+
+```
+查询 → 向量检索 → CRAG 评估 → 动作路由 → 知识精炼 → LLM 生成答案
+                      │
+                      ├─ Correct → 精炼内部知识
+                      ├─ Incorrect → Web 搜索
+                      └─ Ambiguous → 组合两者
+```
+
+### CRAG 核心组件
+
+#### 1. 检索评估器 (Retrieval Evaluator)
+
+**作用**：评估每个检索文档与查询的相关性
+
+**实现**：
+- **轻量级**：使用 T5-large（0.77B 参数）或词法评分
+- **评分**：为每个文档打分（-1.0 到 1.0）
+- **快速**：支持批量评估
+
+**判定逻辑**（符合论文）：
+```python
+if max(scores) >= upper_threshold (0.6):
+    action = "correct"     # 至少一个文档高质量
+elif max(scores) < lower_threshold (0.2):
+    action = "incorrect"   # 所有文档低质量
+else:
+    action = "ambiguous"   # 质量不确定
+```
+
+#### 2. 知识精炼器 (Knowledge Refiner)
+
+**作用**：过滤文档中的无关信息
+
+**Decompose-then-recompose 算法**：
+
+1. **Decompose（分解）**：
+   ```
+   长文档 → 按句子/固定长度分割 → 小片段
+   ```
+
+2. **Score（评分）**：
+   ```
+   为每个片段评分（相关性）
+   ```
+
+3. **Filter（过滤）**：
+   ```
+   保留高分片段，丢弃低分片段
+   ```
+
+4. **Recompose（重组）**：
+   ```
+   按顺序重新组合 → 精炼的知识
+   ```
+
+**三种分解模式**：
+- **excerption**（推荐）：按句子分组（3 句/片段）
+- **fixed_num**：固定长度（50 词/片段）
+- **selection**：不分解，整体评分
+
+#### 3. 动作路由器 (Action Router)
+
+**三种动作策略**：
+
+| Action | 条件 | 策略 | 适用场景 |
+|--------|------|------|----------|
+| **Correct** | 至少一个文档 ≥ 0.6 | 使用知识精炼 | 检索成功，文档相关 |
+| **Incorrect** | 所有文档 < 0.2 | 使用 Web 搜索 | 检索失败，文档无关 |
+| **Ambiguous** | 0.2 ≤ max < 0.6 | 组合两者 | 不确定，需要补充 |
+
+**示例**：
+
+```python
+# 查询："GB146 标准中关于客车的安全要求是什么？"
+# 文档分数：[0.85, 0.72, 0.35, 0.20, 0.15]
+
+max_score = 0.85  # >= 0.6
+→ Action: Correct
+→ 策略: 精炼这 5 个文档，提取关键信息片段
+```
+
+#### 4. Web 搜索增强 (Web Search Augmenter)
+
+**作用**：当内部检索失败时，从互联网获取知识
+
+**流程**：
+1. **查询重写**：将问题改写为搜索关键词
+2. **Web 搜索**：使用 Google/Bing/DuckDuckGo
+3. **优先过滤**：优先 Wikipedia、.edu、.gov
+4. **内容提取**：爬取网页并提取文本
+5. **知识精炼**：应用相同的精炼算法
+
+---
 
 ## 🚀 快速开始
 
-### 步骤 1: 克隆项目
+### 前置要求
+
+- **Python 3.10+**
+- **操作系统**：Windows / Linux / macOS
+- **内存**：建议 4GB+
+- **API Key**：SiliconFlow API Key（用于 LLM）
+
+### 安装步骤
+
+#### 1. 克隆项目
 
 ```bash
 git clone <your-repo-url>
 cd Agno-RAG
 ```
 
-### 步骤 2: 安装依赖管理工具
+#### 2. 创建虚拟环境（推荐）
 
-本项目使用 `uv` 作为依赖管理工具。如果还没有安装，请先安装：
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
 
-**Windows (PowerShell):**
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+# Linux/Mac
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-**Linux/macOS:**
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+#### 3. 安装依赖
 
-**或者使用 pip:**
 ```bash
+# 使用 pip
+pip install -r requirements.txt
+
+# 或使用 uv（更快）
 pip install uv
+uv pip install -r requirements.txt
 ```
 
-### 步骤 3: 安装项目依赖
+**主要依赖**：
+```
+agno>=1.0.0              # Agno 框架
+lancedb>=0.3.0           # 向量数据库
+sentence-transformers    # 嵌入模型
+transformers            # T5 评估器（可选）
+torch                   # PyTorch
+pypdf                   # PDF 处理
+fastapi                 # Web API
+uvicorn                 # ASGI 服务器
+```
+
+#### 4. 配置环境变量
+
+创建 `.env` 文件：
 
 ```bash
-uv sync
+# 复制示例文件
+cp env.example .env
 ```
 
-这将自动创建虚拟环境并安装所有必需的依赖包。
-
-### 步骤 4: 配置环境变量
-
-1. **复制配置模板**：
-   ```bash
-   cp .env.example .env
-   ```
-
-2. **编辑 `.env` 文件**，填写您的 API 密钥：
-   ```env
-   # 必需：DeepSeek API 密钥（通过 SiliconFlow）
-   DEEPSEEK_API_KEY=your_api_key_here
-   ```
-
-   > 💡 **获取 API 密钥**：
-   > - 访问 [SiliconFlow](https://siliconflow.cn/) 注册账号
-   > - 在控制台创建 API 密钥
-   > - 将密钥复制到 `.env` 文件中
-
-### 步骤 5: 启动服务
+编辑 `.env`，添加必要配置：
 
 ```bash
-uv run uvicorn agno_agent:app --host 0.0.0.0 --port 7777 --reload
+# === 必需配置 ===
+
+# LLM API Key（必需）
+SILICONFLOW_API_KEY=your_api_key_here
+
+# === CRAG 配置（可选，有默认值）===
+
+# 启用完整 CRAG
+USE_COMPLETE_CRAG=true
+
+# 禁用快速路径（性能评估时使用）
+DISABLE_FAST_PATH=false
+
+# CRAG 参数
+CRAG_TOP_K=5
+CRAG_UPPER_THRESHOLD=0.6
+CRAG_LOWER_THRESHOLD=0.2
+CRAG_DECOMPOSE_MODE=excerption
+
+# === 可选配置 ===
+
+# Web 搜索（可选）
+# GOOGLE_SEARCH_API_KEY=your_key
+# GOOGLE_SEARCH_ENGINE_ID=your_id
+
+# HuggingFace 镜像（国内加速）
+# HF_ENDPOINT=https://hf-mirror.com
 ```
 
-如果一切正常，您应该看到类似以下的输出：
+#### 5. 启动服务
+
+```bash
+python agno_agent.py
+```
+
+**成功启动后**，您会看到：
 
 ```
-============================================================
 Agno Agent 已启动，日志系统已配置
 ============================================================
-检索日志将输出到此控制台
-============================================================
+知识库已添加到 Agent: RAG Knowledge Base
+  自动搜索: 已禁用（使用 query_documents 工具 + CRAG）
+  ContentsDB: 已配置（AgentOS Knowledge 页面可用）
 
 AgentOS 状态:
   - Agent 名称: Agno Agent
-  - 数据库: SQLite (C:\...\tmp\data.db)
   - 工具数量: 6
   - 知识库: 已配置
-  - 知识库名称: RAG Knowledge Base
-  - 知识库内容: 0 项
-  - 知识库状态: 空（启动后将添加占位符内容以确保 AgentOS 识别）
-  - ContentsDB: 已配置（AgentOS Knowledge 页面应可用）
-  - FastAPI 应用: 已创建
 
 访问地址: http://127.0.0.1:7777
 API 文档: http://127.0.0.1:7777/docs
 ============================================================
 ```
 
-### 步骤 6: 访问服务
-
-- **AgentOS Web 界面**: http://127.0.0.1:7777
-- **API 文档**: http://127.0.0.1:7777/docs
-- **AgentOS 云端连接**: https://os.agno.com（需要配置连接）
-
-## ⚙️ 详细配置
-
-### 环境变量配置
-
-所有配置都在 `.env` 文件中。以下是所有可配置项：
-
-#### 必需配置
-
-```env
-# DeepSeek 模型配置（通过 SiliconFlow）
-DEEPSEEK_MODEL_ID=deepseek-ai/DeepSeek-V3.1-Terminus
-DEEPSEEK_API_KEY=your_api_key_here  # ⚠️ 必需！
-DEEPSEEK_BASE_URL=https://api.siliconflow.cn/v1
-```
-
-#### CRAG 检索策略配置
-
-```env
-# 是否使用完整 CRAG（包含 T5 语义评估器）
-# true: 使用完整 CRAG（推荐，但需要 T5 模型）
-# false: 使用基础 CRAG（仅词法评估，更快但准确度较低）
-USE_COMPLETE_CRAG=true
-
-# 文档分解模式
-# - 'fixed_num': 固定数量分割
-# - 'excerption': 提取关键摘要（推荐）
-# - 'selection': 选择 top-k 片段（更快但准确度较低）
-CRAG_DECOMPOSE_MODE=excerption
-
-# 返回的 top-k 段落数量
-CRAG_TOP_K=5
-
-# 检索的最小相似度分数（0.0-1.0）
-CRAG_SIMILARITY_THRESHOLD=0.15
-
-# 'correct' 动作的阈值（分数高于此值视为正确）
-CRAG_UPPER_THRESHOLD=0.6
-
-# 'ambiguous' 动作的阈值（分数低于此值视为不正确）
-CRAG_LOWER_THRESHOLD=0.2
-```
-
-#### 可选配置
-
-```env
-# Google 搜索 API（用于 CRAG 外部知识检索）
-# GOOGLE_SEARCH_API_KEY=your_google_search_api_key_here
-
-# T5 评估器配置
-# T5_EVALUATOR_PATH=finetuned_t5_evaluator
-# T5_BATCH_SIZE=4
-```
-
-### 配置说明
-
-#### CRAG 模式选择
-
-- **完整 CRAG (`USE_COMPLETE_CRAG=true`)**
-  - ✅ 优点：准确度最高，使用 T5 模型进行语义评估
-  - ❌ 缺点：速度较慢，需要 T5 模型文件
-  - 📦 需要：`finetuned_t5_evaluator` 目录中的 T5 模型
-
-- **基础 CRAG (`USE_COMPLETE_CRAG=false`)**
-  - ✅ 优点：速度快，无需额外模型
-  - ❌ 缺点：准确度较低，仅使用词法匹配
-
-#### 分解模式选择
-
-- **`excerption`**（推荐）：提取关键摘要，平衡速度和准确度
-- **`selection`**：快速模式，适合大量文档
-- **`fixed_num`**：固定数量分割，适合结构化文档
-
-## 🔗 AgentOS 连接
-
-### 本地连接
-
-服务启动后，AgentOS 会自动在本地运行，访问地址：
-- http://127.0.0.1:7777
-
-### 云端连接（可选）
-
-如果您想通过 Agno 官方的 AgentOS 云端界面连接：
-
-1. **确保服务正在运行**（步骤 5）
-
-2. **访问 AgentOS 云端**：
-   - 打开 https://os.agno.com
-   - 登录您的 Agno 账号
-
-3. **添加本地 Agent**：
-   - 在 AgentOS 界面中，点击"添加 Agent"或"连接本地 Agent"
-   - 输入本地服务地址：`http://your-ip:7777`
-   - 如果服务在同一台机器上，使用：`http://127.0.0.1:7777`
-
-4. **验证连接**：
-   - 连接成功后，您应该能看到 "Agno RAG Agent"
-   - 在 Knowledge 部分可以看到知识库
-
-### 连接问题排查
-
-如果无法连接到 AgentOS：
-
-1. **检查服务是否运行**：
-   ```bash
-   # 检查端口是否被占用
-   netstat -ano | findstr :7777  # Windows
-   lsof -i :7777                 # Linux/macOS
-   ```
-
-2. **检查防火墙设置**：
-   - 确保防火墙允许 7777 端口的连接
-
-3. **检查 CORS 配置**：
-   - 确保 `.env` 中没有修改 CORS 相关配置
-   - 检查 `agno_agent.py` 中的 CORS 中间件配置
-
-4. **查看日志**：
-   - 检查控制台输出的错误信息
-   - 查看是否有 "CORS 中间件已配置" 的日志
-
-## 📖 使用指南
-
-### 方式 1: 通过 AgentOS Web 界面
-
-1. **访问界面**：打开 http://127.0.0.1:7777
-
-2. **上传文档**：
-   - 在 Knowledge 部分点击"上传"
-   - 选择 PDF 文件或拖拽文件到上传区域
-   - 等待处理完成
-
-3. **提问**：
-   - 在对话界面输入您的问题
-   - 智能体会自动使用 `query_documents` 工具检索相关文档
-   - 基于检索结果生成答案
-
-### 方式 2: 通过 API 调用
-
-#### 上传文档
-
-```bash
-# 单文件上传
-curl -X POST "http://127.0.0.1:7777/api/upload-pdf" \
-  -F "file=@/path/to/your/document.pdf"
-
-# 或使用 Python
-import requests
-
-with open("document.pdf", "rb") as f:
-    response = requests.post(
-        "http://127.0.0.1:7777/api/upload-pdf",
-        files={"file": f}
-    )
-print(response.json())
-```
-
-#### 查询文档
-
-```python
-from rag_tools import query_documents
-
-# 简单查询
-result = query_documents(
-    query="GB 12352-2018 中关于运行速度的规定是什么？"
-)
-
-# 带参数的查询
-result = query_documents(
-    query="客运架空索道安全规范",
-    top_k=10,
-    similarity_threshold=0.2,
-    decompose_mode="excerption",
-    doc_id_filter="GB12352"
-)
-
-print(result["context"])  # 查看检索到的上下文
-```
-
-### 方式 3: 使用管理脚本
-
-项目包含一个管理脚本 `upload_documents.py`：
-
-```bash
-# 上传单个文件
-uv run python upload_documents.py upload "path/to/document.pdf"
-
-# 批量上传目录
-uv run python upload_documents.py upload-dir "path/to/pdf/directory"
-
-# 列出所有文档
-uv run python upload_documents.py list
-
-# 清空知识库
-uv run python upload_documents.py clear
-```
-
-### 可用工具
-
-智能体可以使用以下工具：
-
-1. **`upload_pdf_document`**: 上传单个 PDF 文档
-2. **`upload_pdf_directory`**: 批量上传目录中的 PDF 文件
-3. **`query_documents`**: 查询知识库（使用 CRAG 检索）
-4. **`list_documents`**: 列出所有已上传的文档
-5. **`delete_document`**: 删除指定文档
-6. **`clear_knowledge_base`**: 清空整个知识库
-
-## 📁 项目结构
-
-```
-Agno-RAG/
-├── agno_agent.py              # 主应用入口，AgentOS 配置
-├── rag_tools.py               # RAG 工具定义（上传、查询等）
-├── crag_core.py               # CRAG 核心组件（语义评估器、动作路由等）
-├── crag_layer.py              # CRAG 基础层（词法评估、文档分解）
-├── document_processor.py      # PDF 文档处理
-├── persistent_vector_store.py # 向量存储（向后兼容）
-├── knowledge_agent.py         # 知识库测试脚本
-├── upload_documents.py        # 管理脚本
-├── pyproject.toml             # 项目配置和依赖
-├── .env.example               # 环境变量模板
-├── .env                       # 实际配置文件（不提交到 Git）
-├── .gitignore                 # Git 忽略文件
-├── README.md                  # 本文件
-└── tmp/                       # 临时文件目录
-    ├── data.db                # Agent 会话数据库
-    ├── knowledge_contents.db  # 知识库内容数据库
-    └── lancedb/               # LanceDB 向量数据库
-```
-
-## ❓ 常见问题
-
-### Q1: 启动时提示 "DEEPSEEK_API_KEY is required"
-
-**原因**：未配置 API 密钥
-
-**解决**：
-1. 确保已创建 `.env` 文件（从 `.env.example` 复制）
-2. 在 `.env` 文件中填写 `DEEPSEEK_API_KEY=your_actual_key`
-3. 重启服务
-
-### Q2: 无法连接到 AgentOS
-
-**原因**：可能是端口被占用或 CORS 配置问题
-
-**解决**：
-1. 检查 7777 端口是否被占用
-2. 尝试更改端口：`uvicorn agno_agent:app --port 8000`
-3. 检查防火墙设置
-4. 查看控制台日志中的错误信息
-
-### Q3: 上传 PDF 后无法检索到内容
-
-**原因**：可能是文档处理失败或检索参数设置不当
-
-**解决**：
-1. 检查文档是否成功上传（使用 `list_documents` 工具）
-2. 降低 `CRAG_SIMILARITY_THRESHOLD` 值（如改为 0.1）
-3. 检查日志中的错误信息
-4. 确保 PDF 文件不是扫描件（需要可提取的文本）
-
-### Q4: CRAG 评估速度很慢
-
-**原因**：使用完整 CRAG 且没有 GPU 加速
-
-**解决**：
-1. 设置 `USE_COMPLETE_CRAG=false` 使用基础 CRAG
-2. 如果有 GPU，确保 PyTorch 正确识别 GPU
-3. 调整 `CRAG_DECOMPOSE_MODE=selection` 使用快速模式
-4. 减少 `CRAG_TOP_K` 值
-
-### Q5: 提示 "No module named 'xxx'"
-
-**原因**：依赖未正确安装
-
-**解决**：
-```bash
-# 重新安装依赖
-uv sync
-
-# 或手动安装缺失的包
-uv pip install <package-name>
-```
-
-### Q6: 知识库显示 "No databases found"
-
-**原因**：ContentsDB 未正确初始化
-
-**解决**：
-1. 检查 `tmp/knowledge_contents.db` 文件是否存在
-2. 重启服务，查看启动日志
-3. 确保知识库初始化成功（查看日志中的 "ContentsDB 已配置" 消息）
-
-## 🏗️ 技术架构
-
-### 核心组件
-
-1. **Agno Framework**: 提供 Agent 和 AgentOS 基础框架
-2. **LanceDB**: 向量数据库，用于存储文档嵌入
-3. **Sentence Transformers**: 本地嵌入模型（支持中英文）
-4. **CRAG**: 纠正性检索增强生成算法
-   - 语义评估器（T5 模型，可选）
-   - 动作路由系统
-   - 文档分解与重组
-
-### 工作流程
-
-```
-用户查询
-    ↓
-向量检索（LanceDB）
-    ↓
-CRAG 评估
-    ├─ 快速路径（高质量结果）
-    │   └─ 词法评估 → 返回结果
-    └─ 完整路径（需要评估）
-        ├─ T5 语义评估（可选）
-        ├─ 动作路由（correct/incorrect/ambiguous）
-        └─ 文档分解与重组
-    ↓
-生成答案
-```
-
-### 数据流
-
-1. **文档上传**：
-   - PDF → 文本提取 → 分块 → 嵌入 → 存储到 LanceDB
-
-2. **查询处理**：
-   - 查询 → 嵌入 → 向量搜索 → CRAG 评估 → 上下文提取 → LLM 生成
+#### 6. 访问界面
+
+打开浏览器访问：
+- **AgentOS 界面**：http://127.0.0.1:7777
+- **API 文档**：http://127.0.0.1:7777/docs
 
 ---
 
-**祝您使用愉快！** 🎉
+## 📚 使用指南
+
+### 基础使用
+
+#### 1. 上传文档
+
+**方法 A：通过 AgentOS 界面**
+
+在对话框中输入：
+```
+上传 PDF 文档 C:\path\to\document.pdf
+```
+
+**方法 B：使用 upload_documents.py 脚本**
+
+```bash
+# 上传单个文件
+python upload_documents.py --file path/to/document.pdf
+
+# 上传整个目录
+python upload_documents.py --dir path/to/pdf_folder
+
+# 递归上传（包括子目录）
+python upload_documents.py --dir path/to/pdf_folder --recursive
+```
+
+**方法 C：通过 API**
+
+```bash
+curl -X POST "http://127.0.0.1:7777/api/upload-pdf" \
+  -F "file=@document.pdf"
+```
+
+#### 2. 查询文档
+
+在 AgentOS 对话框中提问：
+
+```
+GB146 标准中关于客车的安全要求是什么？
+```
+
+**Agent 会自动**：
+1. 调用 `query_documents` 工具
+2. 执行向量检索
+3. 运行 CRAG 评估
+4. 精炼知识片段
+5. 生成答案
+
+#### 3. 查看上传的文档
+
+```
+列出所有文档
+```
+
+或
+
+```
+list_documents
+```
+
+#### 4. 删除文档
+
+```
+删除文档 GB146
+```
+
+### 高级功能
+
+#### 指定文档 ID 查询
+
+```
+在 GB146 文档中查询客车安全要求
+```
+
+系统会自动识别文档 ID 并过滤结果。
+
+#### 清空知识库
+
+```
+清空知识库
+```
+
+⚠️ 警告：此操作不可撤销！
+
+---
+
+## ⚙️ 配置说明
+
+### CRAG 模式选择
+
+#### 模式 1：优化 CRAG（推荐用于生产）
+
+```bash
+USE_COMPLETE_CRAG=true
+DISABLE_FAST_PATH=false  # 启用快速路径优化
+```
+
+**特点**：
+- ✅ 高质量检索走快速路径（跳过昂贵的评估）
+- ✅ 低质量检索使用完整 CRAG
+- ✅ 平衡速度和质量
+
+**快速路径触发条件**：
+1. 检索分数很高（max ≥ 0.5 或 avg ≥ 0.4）
+2. 找到匹配的文档 ID
+3. 结果包含查询关键词
+
+#### 模式 2：完整 CRAG（用于性能评估）
+
+```bash
+USE_COMPLETE_CRAG=true
+DISABLE_FAST_PATH=true   # 禁用快速路径
+```
+
+**特点**：
+- ✅ 所有查询使用完整 CRAG
+- ✅ 可以评估 CRAG 性能
+- ⚠️ 速度稍慢
+
+**日志输出**：
+```
+[性能评估模式] 快速路径已禁用，强制使用完整 CRAG
+CRAG评估模式: 完整CRAG
+  动作路由开始: 10 个文档
+  文档分数范围: [0.1234, 0.8765]
+  [完成] 决策动作: correct
+```
+
+#### 模式 3：基础检索（最快）
+
+```bash
+USE_COMPLETE_CRAG=false
+```
+
+**特点**：
+- ✅ 仅使用向量检索
+- ✅ 速度最快
+- ⚠️ 没有 CRAG 优化
+
+### 环境变量完整列表
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| **LLM 配置** | | |
+| `SILICONFLOW_API_KEY` | 无 | **必需**：SiliconFlow API Key |
+| **CRAG 核心** | | |
+| `USE_COMPLETE_CRAG` | `true` | 启用完整 CRAG |
+| `DISABLE_FAST_PATH` | `false` | 禁用快速路径优化 |
+| `VERBOSE_CRAG` | `false` | 详细日志 |
+| **CRAG 参数** | | |
+| `CRAG_TOP_K` | `5` | 返回的知识片段数 |
+| `CRAG_SIMILARITY_THRESHOLD` | `0.15` | 向量检索相似度阈值 |
+| `CRAG_UPPER_THRESHOLD` | `0.6` | Correct action 阈值 |
+| `CRAG_LOWER_THRESHOLD` | `0.2` | Incorrect action 阈值 |
+| `CRAG_DECOMPOSE_MODE` | `excerption` | 分解模式 |
+| **Web 搜索** | | |
+| `GOOGLE_SEARCH_API_KEY` | 无 | Google Search API Key |
+| `GOOGLE_SEARCH_ENGINE_ID` | 无 | Google 搜索引擎 ID |
+| **其他** | | |
+| `HF_ENDPOINT` | 无 | HuggingFace 镜像地址 |
+
+### 性能调优建议
+
+#### 提高速度
+
+1. **启用快速路径**：
+   ```bash
+   DISABLE_FAST_PATH=false
+   ```
+
+2. **减少 Top-K**：
+   ```bash
+   CRAG_TOP_K=3
+   ```
+
+3. **使用 selection 模式**（不分解）：
+   ```bash
+   CRAG_DECOMPOSE_MODE=selection
+   ```
+
+#### 提高质量
+
+1. **使用完整 CRAG**：
+   ```bash
+   USE_COMPLETE_CRAG=true
+   DISABLE_FAST_PATH=true
+   ```
+
+2. **增加 Top-K**：
+   ```bash
+   CRAG_TOP_K=10
+   ```
+
+3. **使用 excerption 模式**（推荐）：
+   ```bash
+   CRAG_DECOMPOSE_MODE=excerption
+   ```
+
+4. **配置 Web 搜索**（提供外部知识）：
+   ```bash
+   GOOGLE_SEARCH_API_KEY=your_key
+   GOOGLE_SEARCH_ENGINE_ID=your_id
+   ```
+
+---
+
+## 🔍 日志解读
+
+### 完整查询日志示例
+
+```
+============================================================
+开始查询文档
+============================================================
+查询: GB146 标准中关于客车的安全要求是什么？
+参数: top_k=5, similarity_threshold=0.15, decompose_mode=excerption
+------------------------------------------------------------
+
+[检索阶段 1/5] 向量搜索...
+检索到文档数: 10
+文档ID分布: {'GB146': 8, 'GB10494': 2}
+
+提取候选段落: 0.123秒
+候选段落数: 10
+
+[性能评估模式] 快速路径已禁用，强制使用完整 CRAG
+
+CRAG评估模式: 完整CRAG
+
+  动作路由开始: 10 个文档
+  质量评估: 0.234秒
+  文档分数范围: [0.1523, 0.8234], 平均: 0.4321
+  [完成] 决策动作: correct (阈值: upper=0.6, lower=0.2)
+  最高文档分数: 0.8234
+  动作路由总耗时: 0.456秒
+
+CRAG评估总耗时: 0.456秒
+
+结果格式化: 0.012秒
+
+============================================================
+[完成] 检索完成 - 总耗时: 0.89秒
+   检索: 0.40秒 (44.9%)
+   CRAG评估: 0.46秒 (51.7%)
+   其他: 0.03秒
+============================================================
+```
+
+### 日志分析
+
+- **检索阶段**：向量搜索，找到 10 个相关文档
+- **CRAG 评估**：
+  - 文档分数范围：0.15 - 0.82
+  - 最高分 0.82 > 0.6 → **Correct action**
+  - 策略：使用知识精炼
+- **性能**：总耗时 0.89 秒，其中 CRAG 评估占 51.7%
+
+---
+
+## 🤝 常见问题
+
+### Q1: 如何加速首次模型下载？
+
+**A**: 使用 HuggingFace 镜像
+
+```bash
+# 在 .env 中添加
+HF_ENDPOINT=https://hf-mirror.com
+```
+
+### Q2: 为什么查询很慢？
+
+**A**: 可能原因：
+
+1. **完整 CRAG 模式**：尝试启用快速路径
+   ```bash
+   DISABLE_FAST_PATH=false
+   ```
+
+2. **T5 evaluator 在 CPU 上运行**：考虑使用 GPU 或禁用 T5
+
+3. **Top-K 太大**：减少返回数量
+   ```bash
+   CRAG_TOP_K=3
+   ```
+
+### Q3: 如何评估 CRAG 性能？
+
+**A**: 启用完整 CRAG 模式并观察日志
+
+```bash
+# .env
+DISABLE_FAST_PATH=true
+VERBOSE_CRAG=true
+```
+
+观察：
+- Action 分布（Correct/Incorrect/Ambiguous）
+- 检索质量（文档分数）
+- 耗时分布
+
+### Q4: PDF 上传失败怎么办？
+
+**A**: 检查：
+
+1. PDF 格式是否正确
+2. PDF 是否包含可提取的文本（不是纯图片）
+3. 文件路径是否正确
+
+### Q5: 如何使用自己的 LLM？
+
+**A**: 修改 `agno_agent.py` 中的模型配置：
+
+```python
+# 使用 OpenAI
+from agno.models.openai import OpenAIChat
+llm_model = OpenAIChat(id="gpt-4", api_key="your_key")
+
+# 使用本地 Ollama
+from agno.models.ollama import Ollama
+llm_model = Ollama(id="llama3")
+```
+
+---
+
+## 📄 参考文献
+
+1. **CRAG 论文**:
+   - Yan, S. Q., et al. (2024). "Corrective Retrieval Augmented Generation". *arXiv:2401.15884v3*.
+   - 链接: https://arxiv.org/abs/2401.15884
+
+2. **Agno Framework**:
+   - 文档: https://docs.agno.com
+
+3. **LanceDB**:
+   - 文档: https://lancedb.github.io/lancedb/
+
+---
+
+## 📝 License
+
+MIT License
+
+---
+
+## 🙏 致谢
+
+- **CRAG 论文作者**：Shi-Qi Yan, Jia-Chen Gu, Yun Zhu, Zhen-Hua Ling
+- **Agno Framework**：提供强大的 Agent 框架
+- **SentenceTransformers**：提供多语言嵌入模型
+- **LanceDB**：提供高性能向量数据库
+
+---
+
+<div align="center">
+
+**⭐ 如果这个项目对您有帮助，请给个 Star！**
+
+</div>

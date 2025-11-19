@@ -19,6 +19,7 @@ This implementation is intentionally lightweight:
 """
 
 from dataclasses import dataclass
+import os
 import sys
 from typing import Callable, Dict, List, Literal, Optional, Tuple
 

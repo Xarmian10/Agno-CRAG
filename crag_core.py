@@ -574,15 +574,19 @@ class CompleteActionRouter:
         eval_time = time.time() - eval_start
         safe_print(f"  质量评估: {eval_time:.3f}秒")
         
-        # Calculate global score
-        score_start = time.time()
-        global_score = self._calculate_global_score(confidence_scores)
-        score_time = time.time() - score_start
-        safe_print(f"  全局分数: {global_score:.4f} (计算耗时: {score_time:.3f}秒)")
+        # Log score statistics for debugging
+        if confidence_scores:
+            max_score = max(confidence_scores)
+            min_score = min(confidence_scores)
+            safe_print(f"  文档分数范围: [{min_score:.4f}, {max_score:.4f}], 平均: {sum(confidence_scores)/len(confidence_scores):.4f}")
         
-        # Decide action
-        action = self._decide_action(global_score)
+        # Decide action based on individual document scores (per CRAG paper)
+        action = self._decide_action(confidence_scores)
         safe_print(f"  [完成] 决策动作: {action} (阈值: upper={self.upper_threshold}, lower={self.lower_threshold})")
+        
+        # Calculate global score for logging (not used in action decision)
+        global_score = self._calculate_global_score(confidence_scores)
+        safe_print(f"  最高文档分数: {global_score:.4f}")
         
         knowledge = None
         external_knowledge = None
@@ -669,27 +673,59 @@ class CompleteActionRouter:
         return scores
     
     def _calculate_global_score(self, confidence_scores: List[float]) -> float:
-        """Calculate global retrieval quality score."""
+        """
+        Calculate global retrieval quality score for logging/debugging.
+        
+        Note: This score is NOT used for action decision (which is based on
+        individual document scores per CRAG paper). It's kept for monitoring
+        and analysis purposes.
+        
+        Returns the maximum score (most relevant document), which better
+        represents retrieval quality than average.
+        """
         if not confidence_scores:
             return 0.0
         
-        sorted_scores = sorted(confidence_scores, reverse=True)
-        top_k = min(5, len(sorted_scores))
-        return sum(sorted_scores[:top_k]) / top_k
+        # Return the max score (best document)
+        return max(confidence_scores)
     
-    def _decide_action(self, global_score: float) -> CragAction:
-        """Decide action based on global score and thresholds."""
-        if self.evaluator:
-            normalized_score = (global_score + 1.0) / 2.0
-        else:
-            normalized_score = global_score
+    def _decide_action(self, confidence_scores: List[float]) -> CragAction:
+        """
+        Decide action based on individual document scores and thresholds.
         
-        if normalized_score >= self.upper_threshold:
-            return "correct"
-        elif normalized_score >= self.lower_threshold:
+        Following CRAG paper (Algorithm 1, Page 5):
+        - Correct: if at least one document score > upper_threshold
+        - Incorrect: if all document scores < lower_threshold
+        - Ambiguous: otherwise
+        
+        This is the CORRECT implementation per the paper:
+        "If the confidence score is higher than the upper threshold, the retrieved 
+        document is identified as Correct, while identified as Incorrect if below 
+        the lower threshold. Each retrieved document is conducted individually."
+        """
+        if not confidence_scores:
             return "ambiguous"
+        
+        # Normalize scores if using T5 evaluator (scores in [-1, 1])
+        if self.evaluator:
+            normalized_scores = [(score + 1.0) / 2.0 for score in confidence_scores]
         else:
+            normalized_scores = confidence_scores
+        
+        # Check individual document scores (per paper requirement)
+        max_score = max(normalized_scores)
+        
+        # CORRECT: at least one document > upper_threshold
+        if max_score >= self.upper_threshold:
+            return "correct"
+        
+        # INCORRECT: all documents < lower_threshold
+        # (equivalent to: max_score < lower_threshold)
+        if max_score < self.lower_threshold:
             return "incorrect"
+        
+        # AMBIGUOUS: otherwise (some scores >= lower_threshold, but none >= upper_threshold)
+        return "ambiguous"
     
     def _combine_knowledge(
         self,

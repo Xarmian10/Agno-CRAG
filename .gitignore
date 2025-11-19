@@ -62,7 +62,7 @@ temp/
 models/
 *.bin
 *.safetensors
-finetuned_t5_evaluator/
+# Note: finetuned_t5_evaluator/ is intentionally tracked for sharing the T5 model
 
 # Testing
 .pytest_cache/
